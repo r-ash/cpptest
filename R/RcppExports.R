@@ -9,3 +9,19 @@ do_double <- function(x) {
     .Call('_cpptest_do_double', PACKAGE = 'cpptest', x)
 }
 
+modify_std_vector <- function(vector) {
+    .Call('_cpptest_modify_std_vector', PACKAGE = 'cpptest', vector)
+}
+
+get_array <- function() {
+    invisible(.Call('_cpptest_get_array', PACKAGE = 'cpptest'))
+}
+
+push_array <- function(arr) {
+    .Call('_cpptest_push_array', PACKAGE = 'cpptest', arr)
+}
+
+push_list_arrays <- function(lst) {
+    .Call('_cpptest_push_list_arrays', PACKAGE = 'cpptest', lst)
+}
+

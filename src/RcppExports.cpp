@@ -28,10 +28,56 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// modify_std_vector
+std::vector<double> modify_std_vector(std::vector<double> vector);
+RcppExport SEXP _cpptest_modify_std_vector(SEXP vectorSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type vector(vectorSEXP);
+    rcpp_result_gen = Rcpp::wrap(modify_std_vector(vector));
+    return rcpp_result_gen;
+END_RCPP
+}
+// get_array
+void get_array();
+RcppExport SEXP _cpptest_get_array() {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    get_array();
+    return R_NilValue;
+END_RCPP
+}
+// push_array
+std::vector<double> push_array(std::vector<double> arr);
+RcppExport SEXP _cpptest_push_array(SEXP arrSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type arr(arrSEXP);
+    rcpp_result_gen = Rcpp::wrap(push_array(arr));
+    return rcpp_result_gen;
+END_RCPP
+}
+// push_list_arrays
+std::list< std::vector<double> > push_list_arrays(std::list< std::vector<double> > lst);
+RcppExport SEXP _cpptest_push_list_arrays(SEXP lstSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::list< std::vector<double> > >::type lst(lstSEXP);
+    rcpp_result_gen = Rcpp::wrap(push_list_arrays(lst));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cpptest_add", (DL_FUNC) &_cpptest_add, 2},
     {"_cpptest_do_double", (DL_FUNC) &_cpptest_do_double, 1},
+    {"_cpptest_modify_std_vector", (DL_FUNC) &_cpptest_modify_std_vector, 1},
+    {"_cpptest_get_array", (DL_FUNC) &_cpptest_get_array, 0},
+    {"_cpptest_push_array", (DL_FUNC) &_cpptest_push_array, 1},
+    {"_cpptest_push_list_arrays", (DL_FUNC) &_cpptest_push_list_arrays, 1},
     {NULL, NULL, 0}
 };
 
