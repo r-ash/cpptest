@@ -70,6 +70,27 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// test_1d_arrays
+void test_1d_arrays(std::list< std::vector<double> > arr_list);
+RcppExport SEXP _cpptest_test_1d_arrays(SEXP arr_listSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::list< std::vector<double> > >::type arr_list(arr_listSEXP);
+    test_1d_arrays(arr_list);
+    return R_NilValue;
+END_RCPP
+}
+// test_2d_arrays
+void test_2d_arrays(std::list< std::vector<double> > arr_list, std::list< std::vector<int> > dimensions);
+RcppExport SEXP _cpptest_test_2d_arrays(SEXP arr_listSEXP, SEXP dimensionsSEXP) {
+BEGIN_RCPP
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::list< std::vector<double> > >::type arr_list(arr_listSEXP);
+    Rcpp::traits::input_parameter< std::list< std::vector<int> > >::type dimensions(dimensionsSEXP);
+    test_2d_arrays(arr_list, dimensions);
+    return R_NilValue;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_cpptest_add", (DL_FUNC) &_cpptest_add, 2},
@@ -78,6 +99,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cpptest_get_array", (DL_FUNC) &_cpptest_get_array, 0},
     {"_cpptest_push_array", (DL_FUNC) &_cpptest_push_array, 1},
     {"_cpptest_push_list_arrays", (DL_FUNC) &_cpptest_push_list_arrays, 1},
+    {"_cpptest_test_1d_arrays", (DL_FUNC) &_cpptest_test_1d_arrays, 1},
+    {"_cpptest_test_2d_arrays", (DL_FUNC) &_cpptest_test_2d_arrays, 2},
     {NULL, NULL, 0}
 };
 

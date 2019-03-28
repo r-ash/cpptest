@@ -49,7 +49,8 @@ void get_array() {
 
 // [[Rcpp::export]]
 std::vector<double> push_array(std::vector<double> arr) {
-  array_3d A = read_array(arr);
+  std::vector<int> dims = {3,4,2};
+  array_3d A = read_3d_array(arr, dims);
   Rcpp::Rcout << "hi" << A.origin() << "\n";
 
   std::vector<double> ret(3 * 4 * 2);
