@@ -49,8 +49,7 @@ void get_array() {
 
 // [[Rcpp::export]]
 std::vector<double> push_array(std::vector<double> arr) {
-  std::vector<int> dims = {3,4,2};
-  array_3d A = read_3d_array(arr, dims);
+  array_3d A = read_3d_array(arr, 3, 4, 2);
   Rcpp::Rcout << "hi" << A.origin() << "\n";
 
   std::vector<double> ret(3 * 4 * 2);
@@ -72,9 +71,9 @@ std::list< std::vector<double> > push_list_arrays(std::list< std::vector<double>
   std::vector<double> ret_array(3 * 4 * 2);
   for (std::list<array_3d>::iterator it = arrays.begin(); it != arrays.end(); it++) {
     double * data = (*it).data();
-    for(size_t j = 0; j < (*it).num_elements(); j++) {
+    for (size_t j = 0; j < (*it).num_elements(); j++) {
       ret_array[j]  = data[j];
-      if(j == 12) {
+      if (j == 12) {
         ret_array[j] = 55;
       }
     }

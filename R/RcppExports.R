@@ -25,11 +25,7 @@ push_list_arrays <- function(lst) {
     .Call('_cpptest_push_list_arrays', PACKAGE = 'cpptest', lst)
 }
 
-test_1d_arrays <- function(arr_list) {
-    invisible(.Call('_cpptest_test_1d_arrays', PACKAGE = 'cpptest', arr_list))
-}
-
-test_2d_arrays <- function(arr_list, dimensions) {
-    invisible(.Call('_cpptest_test_2d_arrays', PACKAGE = 'cpptest', arr_list, dimensions))
+runModel <- function(basePop, timeSteps) {
+    .Call('_cpptest_runModel', PACKAGE = 'cpptest', basePop, timeSteps)
 }
 

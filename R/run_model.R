@@ -17,13 +17,15 @@ test_models <- function() {
 
   dims <- lapply(arrays, dim)
 
-  test_3d_arrays()
+  push_list_arrays(arrays)
 
+}
 
-  array1 <- 1:10
-  array2 <- 11:20
-
-  arrays <- list(first = array1,
-                 second = array2)
-  test_1d_arrays(arrays)
+test_run_model <- function(timesteps) {
+  inputs <- readRDS(system.file("direct_incidence_model_input.rds", package = "cpptest"))
+  pop_dims <- list("ages" = 15:80,
+                   "sexes" = c("Male", "Female"),
+                   "hiv_status" = c("HIVN", "HIVP"),
+                   "proj_years" = 1970:2025)
+  array(runModel(inputs$basepop, timesteps), lengths(pop_dims), pop_dims)
 }
