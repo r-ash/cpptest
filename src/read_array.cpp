@@ -6,6 +6,18 @@ array_2d readBasePopulation(std::vector<double> basePop) {
 	return basePopulation;
 }
 
+array_1d readAgeGroupsSpan(std::vector<double> ageGroupsSp) {
+	array_1d ageGroupsSpan(boost::extents[AGE_GROUPS]);
+	std::copy(ageGroupsSp.begin(), ageGroupsSp.end(), ageGroupsSpan.data());
+	return ageGroupsSpan;
+}
+
+array_2d readEntrantPrev(std::vector<double> entrantPrev) {
+	array_2d entPrev(boost::extents[PROJECTION_YEARS][SEXES]);
+	std::copy(entrantPrev.begin(), entrantPrev.end(), entPrev.data());
+	return entPrev;
+}
+
 array_1d read_1d_array(std::vector<double> arr, int dimensions) {
 	array_1d A(boost::extents[dimensions]);
 	std::copy(arr.begin(), arr.end(), A.data());

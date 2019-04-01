@@ -71,14 +71,31 @@ BEGIN_RCPP
 END_RCPP
 }
 // runModel
-std::vector<double> runModel(std::vector<double> basePop, int timeSteps);
-RcppExport SEXP _cpptest_runModel(SEXP basePopSEXP, SEXP timeStepsSEXP) {
+std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart, std::vector<double> entrantPrev, int timeSteps);
+RcppExport SEXP _cpptest_runModel(SEXP basePopSEXP, SEXP ageGroupsSpanSEXP, SEXP timeArtStartSEXP, SEXP entrantPrevSEXP, SEXP timeStepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<double> >::type basePop(basePopSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ageGroupsSpan(ageGroupsSpanSEXP);
+    Rcpp::traits::input_parameter< int >::type timeArtStart(timeArtStartSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type entrantPrev(entrantPrevSEXP);
     Rcpp::traits::input_parameter< int >::type timeSteps(timeStepsSEXP);
-    rcpp_result_gen = Rcpp::wrap(runModel(basePop, timeSteps));
+    rcpp_result_gen = Rcpp::wrap(runModel(basePop, ageGroupsSpan, timeArtStart, entrantPrev, timeSteps));
+    return rcpp_result_gen;
+END_RCPP
+}
+// runModel
+std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart, int timeSteps);
+RcppExport SEXP _cpptest_runModel(SEXP basePopSEXP, SEXP ageGroupsSpanSEXP, SEXP timeArtStartSEXP, SEXP timeStepsSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< std::vector<double> >::type basePop(basePopSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type ageGroupsSpan(ageGroupsSpanSEXP);
+    Rcpp::traits::input_parameter< int >::type timeArtStart(timeArtStartSEXP);
+    Rcpp::traits::input_parameter< int >::type timeSteps(timeStepsSEXP);
+    rcpp_result_gen = Rcpp::wrap(runModel(basePop, ageGroupsSpan, timeArtStart, timeSteps));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -90,7 +107,8 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cpptest_get_array", (DL_FUNC) &_cpptest_get_array, 0},
     {"_cpptest_push_array", (DL_FUNC) &_cpptest_push_array, 1},
     {"_cpptest_push_list_arrays", (DL_FUNC) &_cpptest_push_list_arrays, 1},
-    {"_cpptest_runModel", (DL_FUNC) &_cpptest_runModel, 2},
+    {"_cpptest_runModel", (DL_FUNC) &_cpptest_runModel, 5},
+    {"_cpptest_runModel", (DL_FUNC) &_cpptest_runModel, 4},
     {NULL, NULL, 0}
 };
 
