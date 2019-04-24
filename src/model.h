@@ -58,7 +58,7 @@ public:
 		  naturalDeaths(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  netMigration(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]),
-		  sexRatioAtBirth(boost::extents[qPROJECTION_YEARS][SEXES]) {
+		  sexRatioAtBirth(boost::extents[PROJECTION_YEARS][SEXES]) {
 
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
@@ -252,8 +252,7 @@ public:
 	void fertility(int t) {
 		Rcpp::Rcout << "Calculating fertility \n";
 		double births = 0.0;
-		double birthsByAgeGroup[FERT_AGE_GROUPS];
-		memset(birthsByAgeGroup, 0, FERT_AGE_GROUPS * sizeof(double));
+		std::vector<double> birthsByAgeGroup(FERT_AGE_GROUPS, 0.0);
 		for (int diseaseStatus = 0; diseaseStatus < DISEASE_STATUS; diseaseStatus++) {
 			int a = pIDX_FERT;
 			for (int ha = hIDX_FERT; ha < hIDX_FERT + FERT_AGE_GROUPS; ha++) {
