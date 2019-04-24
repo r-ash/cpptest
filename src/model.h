@@ -10,7 +10,7 @@
 class Model {
 private:
 	array_4d population;
-	array_1d ageGroupsSpan;
+	std::vector<double> ageGroupsSpan;
 	int timeArtStart;
 	array_5d artPopulation;
 	array_4d hivPop;
@@ -18,8 +18,8 @@ private:
 	array_2d entrantPrev;
 	array_1d entrantPrevOut;
 	array_1d previousPregnancyLag;
-	array_1d vertTransLag;
-	array_1d paedSurveyLag;
+	std::vector<double> vertTransLag;
+	std::vector<double> paedSurveyLag;
 	bool populationAdjust;
 	array_2d entrantPopulation;
 	array_2d birthsLag;
@@ -36,20 +36,17 @@ private:
 	array_2d sexRatioAtBirth;
 
 public:
-	Model(array_2d basePopulation, array_1d ageGroupsSp, array_1d vertTLag, array_1d paedSurvLag,
+	Model(array_2d basePopulation, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
 	      bool popAdjust, array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
 	      array_2d cumNetMigr, double netMigrationHivProb, array_3d paedSurvCd4Distrib,
 	      array_2d entrantArtCov, array_4d paedSurvArtCd4Distrib, array_3d survRate,
 	      array_3d netMigr, array_2d asfRate, array_2d sexRatioBirth, int tArtStart)
 		: population(boost::extents[PROJECTION_YEARS][DISEASE_STATUS][SEXES][MODEL_AGES]),
-		  ageGroupsSpan(boost::extents[AGE_GROUPS]),
 		  artPopulation(boost::extents[PROJECTION_YEARS][SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
 		  hivPop(boost::extents[PROJECTION_YEARS][SEXES][AGE_GROUPS][CD4_STAGES]),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  entrantPrevOut(boost::extents[PROJECTION_YEARS]),
 		  previousPregnancyLag(boost::extents[PROJECTION_YEARS]),
-		  vertTransLag(boost::extents[PROJECTION_YEARS]),
-		  paedSurveyLag(boost::extents[PROJECTION_YEARS]),
 		  entrantPopulation(boost::extents[PROJECTION_YEARS][SEXES]),
 		  birthsLag(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeSurvey(boost::extents[PROJECTION_YEARS][SEXES]),
@@ -61,7 +58,7 @@ public:
 		  naturalDeaths(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  netMigration(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]),
-		  sexRatioAtBirth(boost::extents[PROJECTION_YEARS][SEXES]) {
+		  sexRatioAtBirth(boost::extents[qPROJECTION_YEARS][SEXES]) {
 
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;

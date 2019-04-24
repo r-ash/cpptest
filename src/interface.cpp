@@ -10,23 +10,20 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
                              std::vector<double> paedSurvArtCd4Distrib, std::vector<double> survRate,
                              std::vector<double> netMigr, std::vector<double> asfRate,
                              std::vector<double> sexRatioBirth, int timeSteps) {
-	array_2d basePopulation = readBasePopulation(basePop);
-	array_1d ageGroupsSp = readAgeGroupsSpan(ageGroupsSpan);
-	array_1d vertTrans = readVertTransLag(vertTransLag);
-	array_1d paedSurvLag = readPaedSurveyLag(paedSurveyLag);
-	array_2d entrantPopulation = readEntrantPopulation(entrantPop);
-	array_2d birthsLag = readBirthsLag(birthLag);
-	array_2d cumulativeSurvey = readCumulativeSurvey(cumSurv);
-	array_2d cumulativeNetMigr = readCumulativeNetMigr(cumNetMigr);
-	array_3d paedSurvCd4Dist = readPaedSurvCd4Dist(paedSurvCd4Distrib);
+	array_2d basePopulation = read_2d_array(basePop, SEXES, MODEL_AGES);
+	array_2d entrantPopulation = read_2d_array(entrantPop, PROJECTION_YEARS, SEXES);
+	array_2d birthsLag = read_2d_array(birthLag, PROJECTION_YEARS, SEXES);
+	array_2d cumulativeSurvey = read_2d_array(cumSurv, PROJECTION_YEARS, SEXES);
+	array_2d cumulativeNetMigr = read_2d_array(cumNetMigr, PROJECTION_YEARS, SEXES);
+	array_3d paedSurvCd4Dist = read_3d_array(paedSurvCd4Distrib, PROJECTION_YEARS, SEXES, CD4_STAGES);
 	array_2d entrantArtCov = readEntrantArtCoverage(entrantArtCoverage);
-	array_4d paedSurvArtCd4Dist = readPaedSurvArtCd4Dist(paedSurvArtCd4Distrib);
-	array_3d survivalRate = readSurvivalRate(survRate);
-	array_3d netMigration = readNetMigration(netMigr);
-	array_2d asfr = readAsfr(asfRate);
-	array_2d sexRatioAtBirth = readSexRatioAtBirth(sexRatioBirth);
+	array_4d paedSurvArtCd4Dist = read_4d_array(paedSurvArtCd4Distrib, PROJECTION_YEARS, SEXES, CD4_STAGES, TREATMENT_STAGES);
+	array_3d survivalRate = read_3d_array(survRate, PROJECTION_YEARS, SEXES, MODEL_AGES);
+	array_3d netMigration = read_3d_array(netMigr, PROJECTION_YEARS, SEXES, MODEL_AGES);
+	array_2d asfr = read_2d_array(asfRate, PROJECTION_YEARS, FERT_AGES);
+	array_2d sexRatioAtBirth = read_2d_array(sexRatioBirth, PROJECTION_YEARS, SEXES);
 
-	Model model = Model(basePopulation, ageGroupsSp, vertTrans, paedSurvLag, populationAdjust,
+	Model model = Model(basePopulation, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
 	                    entrantPopulation, birthsLag, cumulativeSurvey, cumulativeNetMigr, netMigrHivProb,
 	                    paedSurvCd4Dist, entrantArtCov, paedSurvArtCd4Dist, survivalRate, netMigration,
 	                    asfr, sexRatioAtBirth, timeArtStart);
