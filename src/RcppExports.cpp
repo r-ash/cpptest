@@ -71,31 +71,28 @@ BEGIN_RCPP
 END_RCPP
 }
 // runModel
-std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart, std::vector<double> entrantPrev, int timeSteps);
-RcppExport SEXP _cpptest_runModel(SEXP basePopSEXP, SEXP ageGroupsSpanSEXP, SEXP timeArtStartSEXP, SEXP entrantPrevSEXP, SEXP timeStepsSEXP) {
+std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart, SEXP entrantPrev, std::vector<double> vertTransLag, std::vector<double> paedSurveyLag, bool populationAdjust, std::vector<double> entrantPop, std::vector<double> birthLag, std::vector<double> cumSurv, std::vector<double> cumNetMigr, double netMigrHivProb, std::vector<double> paedSurvCd4Distrib, SEXP entrantArtCoverage, std::vector<double> paedSurvArtCd4Distrib, int timeSteps);
+RcppExport SEXP _cpptest_runModel(SEXP basePopSEXP, SEXP ageGroupsSpanSEXP, SEXP timeArtStartSEXP, SEXP entrantPrevSEXP, SEXP vertTransLagSEXP, SEXP paedSurveyLagSEXP, SEXP populationAdjustSEXP, SEXP entrantPopSEXP, SEXP birthLagSEXP, SEXP cumSurvSEXP, SEXP cumNetMigrSEXP, SEXP netMigrHivProbSEXP, SEXP paedSurvCd4DistribSEXP, SEXP entrantArtCoverageSEXP, SEXP paedSurvArtCd4DistribSEXP, SEXP timeStepsSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< std::vector<double> >::type basePop(basePopSEXP);
     Rcpp::traits::input_parameter< std::vector<double> >::type ageGroupsSpan(ageGroupsSpanSEXP);
     Rcpp::traits::input_parameter< int >::type timeArtStart(timeArtStartSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type entrantPrev(entrantPrevSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type entrantPrev(entrantPrevSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type vertTransLag(vertTransLagSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type paedSurveyLag(paedSurveyLagSEXP);
+    Rcpp::traits::input_parameter< bool >::type populationAdjust(populationAdjustSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type entrantPop(entrantPopSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type birthLag(birthLagSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type cumSurv(cumSurvSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type cumNetMigr(cumNetMigrSEXP);
+    Rcpp::traits::input_parameter< double >::type netMigrHivProb(netMigrHivProbSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type paedSurvCd4Distrib(paedSurvCd4DistribSEXP);
+    Rcpp::traits::input_parameter< SEXP >::type entrantArtCoverage(entrantArtCoverageSEXP);
+    Rcpp::traits::input_parameter< std::vector<double> >::type paedSurvArtCd4Distrib(paedSurvArtCd4DistribSEXP);
     Rcpp::traits::input_parameter< int >::type timeSteps(timeStepsSEXP);
-    rcpp_result_gen = Rcpp::wrap(runModel(basePop, ageGroupsSpan, timeArtStart, entrantPrev, timeSteps));
-    return rcpp_result_gen;
-END_RCPP
-}
-// runModel
-std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart, int timeSteps);
-RcppExport SEXP _cpptest_runModel(SEXP basePopSEXP, SEXP ageGroupsSpanSEXP, SEXP timeArtStartSEXP, SEXP timeStepsSEXP) {
-BEGIN_RCPP
-    Rcpp::RObject rcpp_result_gen;
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< std::vector<double> >::type basePop(basePopSEXP);
-    Rcpp::traits::input_parameter< std::vector<double> >::type ageGroupsSpan(ageGroupsSpanSEXP);
-    Rcpp::traits::input_parameter< int >::type timeArtStart(timeArtStartSEXP);
-    Rcpp::traits::input_parameter< int >::type timeSteps(timeStepsSEXP);
-    rcpp_result_gen = Rcpp::wrap(runModel(basePop, ageGroupsSpan, timeArtStart, timeSteps));
+    rcpp_result_gen = Rcpp::wrap(runModel(basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, timeSteps));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -107,8 +104,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_cpptest_get_array", (DL_FUNC) &_cpptest_get_array, 0},
     {"_cpptest_push_array", (DL_FUNC) &_cpptest_push_array, 1},
     {"_cpptest_push_list_arrays", (DL_FUNC) &_cpptest_push_list_arrays, 1},
-    {"_cpptest_runModel", (DL_FUNC) &_cpptest_runModel, 5},
-    {"_cpptest_runModel", (DL_FUNC) &_cpptest_runModel, 4},
+    {"_cpptest_runModel", (DL_FUNC) &_cpptest_runModel, 16},
     {NULL, NULL, 0}
 };
 

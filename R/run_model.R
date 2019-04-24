@@ -27,13 +27,13 @@ test_run_model <- function(timesteps) {
                    "sexes" = c("Male", "Female"),
                    "hiv_status" = c("HIVN", "HIVP"),
                    "proj_years" = 1970:2025)
-  if (is.null(inputs$entrantprev)) {
-    model_run <- runModel(inputs$basepop, inputs$ss$h.ag.span, inputs$tARTstart,
-                          timesteps)
-  } else {
-    model_run <- runModel(inputs$basepop, inputs$ss$h.ag.span, inputs$tARTstart,
-                          inputs$entrantprev, timesteps)
-  }
+  model_run <- runModel(inputs$basepop, inputs$ss$h.ag.span, inputs$tARTstart,
+                        inputs$entrantprev, inputs$verttrans_lag,
+                        inputs$paedsurv_lag, inputs$popadjust, inputs$entrantpop,
+                        inputs$birthslag, inputs$cumsurv, inputs$cumnetmigr,
+                        inputs$netmig_hivprob, inputs$paedsurv_cd4dist,
+                        inputs$entrantartcov, inputs$paedsurv_artcd4dist,
+                        timesteps)
   array(
     model_run, lengths(pop_dims), pop_dims
   )

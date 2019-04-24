@@ -25,11 +25,7 @@ push_list_arrays <- function(lst) {
     .Call('_cpptest_push_list_arrays', PACKAGE = 'cpptest', lst)
 }
 
-runModel <- function(basePop, ageGroupsSpan, timeArtStart, entrantPrev, timeSteps) {
-    .Call('_cpptest_runModel', PACKAGE = 'cpptest', basePop, ageGroupsSpan, timeArtStart, entrantPrev, timeSteps)
-}
-
-runModel <- function(basePop, ageGroupsSpan, timeArtStart, timeSteps) {
-    .Call('_cpptest_runModel', PACKAGE = 'cpptest', basePop, ageGroupsSpan, timeArtStart, timeSteps)
+runModel <- function(basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, timeSteps) {
+    .Call('_cpptest_runModel', PACKAGE = 'cpptest', basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, timeSteps)
 }
 
