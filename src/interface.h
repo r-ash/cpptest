@@ -10,6 +10,7 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
                              bool populationAdjust, std::vector<double> entrantPop, std::vector<double> birthLag,
                              std::vector<double> cumSurv, std::vector<double> cumNetMigr, double netMigrHivProb,
                              std::vector<double> paedSurvCd4Distrib, std::vector<double> paedSurvArtCd4Distrib,
-                             int timeSteps);
+                             std::vector<double> survRate, std::vector<double> netMigr, std::vector<double> asfRate,
+                             std::vector<double> sexRatioBirth, int timeSteps);
 
 #endif

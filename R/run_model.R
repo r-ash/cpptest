@@ -33,6 +33,7 @@ test_run_model <- function(timesteps) {
                         inputs$birthslag, inputs$cumsurv, inputs$cumnetmigr,
                         inputs$netmig_hivprob, inputs$paedsurv_cd4dist,
                         inputs$entrantartcov, inputs$paedsurv_artcd4dist,
+                        inputs$Sx, inputs$netmigr, inputs$asfr, inputs$srb,
                         timesteps)
   array(
     model_run, lengths(pop_dims), pop_dims

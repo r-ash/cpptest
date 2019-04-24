@@ -78,6 +78,30 @@ array_4d readPaedSurvArtCd4Dist(std::vector<double> paedSurvArtCd4Dist) {
 	return paedSurvArtCd4Distrib;
 }
 
+array_3d readSurvivalRate(std::vector<double> survivalRate) {
+	array_3d survRate(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]);
+	std::copy(survivalRate.begin(), survivalRate.end(), survRate.data());
+	return survRate;
+}
+
+array_3d readNetMigration(std::vector<double> netMigration) {
+	array_3d netMigr(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]);
+	std::copy(netMigration.begin(), netMigration.end(), netMigr.data());
+	return netMigr;
+}
+
+array_2d readAsfr(std::vector<double> asfRate) {
+	array_2d asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]);
+	std::copy(asfRate.begin(), asfRate.end(), asfr.data());
+	return asfr;
+}
+
+array_2d readSexRatioAtBirth(std::vector<double> readSexRatioAtBirth) {
+	array_2d sexRatioBirth(boost::extents[PROJECTION_YEARS][SEXES]);
+	std::copy(readSexRatioAtBirth.begin(), readSexRatioAtBirth.end(), sexRatioBirth.data());
+	return sexRatioBirth;
+}
+
 array_1d read_1d_array(std::vector<double> arr, int dimensions) {
 	array_1d A(boost::extents[dimensions]);
 	std::copy(arr.begin(), arr.end(), A.data());

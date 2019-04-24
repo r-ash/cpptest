@@ -25,6 +25,10 @@ array_2d readCumulativeNetMigr(std::vector<double> cumulativeNetMigr);
 array_3d readPaedSurvCd4Dist(std::vector<double> paedSurvCd4Dist);
 array_2d readEntrantArtCoverage(SEXP entrantArtCoverage);
 array_4d readPaedSurvArtCd4Dist(std::vector<double> paedSurvArtCd4Dist);
+array_3d readSurvivalRate(std::vector<double> survivalRate);
+array_3d readNetMigration(std::vector<double> netMigration);
+array_2d readAsfr(std::vector<double> asfRate);
+array_2d readSexRatioAtBirth(std::vector<double> readSexRatioAtBirth);
 
 array_1d read_1d_array(std::vector<double> arr, int dim1);
 array_2d read_2d_array(std::vector<double> arr, int dim1, int dim2);
