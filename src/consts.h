@@ -14,6 +14,8 @@
 
 #define FERT_AGES 35 // pAG_FERT
 #define pIDX_FERT 0 // pIDX_FERT
+#define pIDX_15TO49 0
+#define pAG_15TO49  35
 
 #define FERT_AGE_GROUPS 8 // hAG_FERT No of age groups for fertility
 #define hIDX_FERT 0 // hIDX_FERT 

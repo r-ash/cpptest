@@ -14,7 +14,7 @@ private:
 	int timeArtStart;
 	array_5d artPopulation;
 	array_4d hivPop;
-	bool useEntrantPrev = FALSE;
+	bool useEntrantPrev;
 	array_2d entrantPrev;
 	array_1d previousPregnancyLag;
 	std::vector<double> vertTransLag;
@@ -42,17 +42,17 @@ private:
 	double relinfectArt;
 	double iota;
 	std::vector<double> incrrSex;
-	bool incidMod = FALSE;
+	bool incidMod;
 	int eppMod;
 	int scaleCd4Mortality;
 	std::vector<double> projectionSteps;
 	double timeEpidemicStart;
-	int everArtEligId = CD4_STAGES;
+	int everArtEligId;
 	std::vector<int> artCd4EligId;
 	std::vector<double> specPopPercentElig;
 	std::vector<double> pregnantArtElig;
 	double who34PercentElig;
-	double prevalenceCurrent = 0.0;
+	double prevalenceCurrent;
 	// Store prevalence at last time step for r-trend model
 	double prevalenceLast;
 	std::vector<int> ageGroupsStart;
@@ -101,13 +101,13 @@ public:
 		  cd4InitialDist(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
 		  cd4Mortality(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
 		  incrrAge(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
+		  ageGroupsStart(AGE_GROUPS, 0),
 		  entrantPrevOut(boost::extents[PROJECTION_YEARS]),
 		  incidence15to49(boost::extents[PROJECTION_YEARS]),
 		  prevalence15to49(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
 		  incrate15To49(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
 		  rVec(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
-		  infections(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
-		  ageGroupsStart(AGE_GROUPS, 0) {
+		  infections(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]) {
 
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
@@ -138,6 +138,10 @@ public:
 		pregnantArtElig = pregnantWomenArtElig;
 		who34PercentElig = who34PercElig;
 		ageGroupsSpan = ageGroupsSp;
+		incidMod = FALSE;
+		prevalenceCurrent = 0.0;
+		useEntrantPrev = FALSE;
+		everArtEligId = CD4_STAGES;
 
 		for (int sex = 0; sex < SEXES; sex++) {
 			for (int age = 0; age < MODEL_AGES; age++) {
@@ -399,19 +403,14 @@ public:
 				if (eppMod == EPP_RSPLINE) {
 					rVec[ts] = rSplineRVec[ts];
 				} else {
-					// rVec[ts] = calc_rtrend_rt(pop, rTrendTStab, rTrendBeta, rTrendR0,
-					//                           projectionSteps[ts], timeEpidemicStart, DT, t, hivStep,
-					//                           rVec[ts - 1], &prevalenceLast, &prevalenceCurrent);
+					rVec[ts] = calcRtrendRt(t, hivStep, ts);
 				}
 
 				// calculate new infections by sex and age
 				double infectionsBySexAge[SEXES][MODEL_AGES];
 				if (incidMod) {
-					// calc_infections_eppspectrum(population, hivPop, artPopulation,
-					//                             rVec[ts], artRelinfect, (projectionSteps[ts] == timeEpidemicStart) ? iota : 0.0,
-					//                             incrrSex, incrrAge,
-					//                             timeArtStart, DT, t, hivStep, ageGroupsStart, ageGroupsSpan,
-					//                             &prevalenceCurrent, &incrate15To49[ts], incrate15To49);
+					calcInfectionsEppSpectrum((projectionSteps[ts] == timeEpidemicStart) ? iota : 0.0,
+					                          t, hivStep, ts, infectionsBySexAge);
 				}
 
 				prevalence15to49[ts] = prevalenceCurrent;
@@ -440,6 +439,105 @@ public:
 				}
 			}
 		}
+	}
+
+	double calcRtrendRt(int t, int hivStep, int ts) {
+		// sum population sizes
+		double Xhivn = 0.0, Xhivp = 0.0;
+		for (int sex = 0; sex < SEXES; sex++)
+			for (int a = pIDX_15TO49; a < pIDX_15TO49 + pAG_15TO49; a++) {
+				Xhivn += population[t][HIVN][sex][a];
+				Xhivp += population[t][HIVP][sex][a];
+			}
+
+		// adjust HIV population for partial year time step
+		for (int sex = 0; sex < SEXES; sex++) {
+			Xhivn -= population[t][HIVN][sex][pIDX_15TO49] * (1.0 - DT * hivStep);
+			Xhivp -= population[t][HIVP][sex][pIDX_15TO49] * (1.0 - DT * hivStep);
+			Xhivn += population[t][HIVN][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hivStep);
+			Xhivp += population[t][HIVP][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hivStep);
+		}
+
+		double Xtot = Xhivn + Xhivp;
+
+		prevalenceLast = prevalenceCurrent;
+		prevalenceCurrent = Xhivp / Xtot;
+
+		// calculate r(t)
+		double projStep = projectionSteps[ts];
+		if (projStep > timeEpidemicStart) {
+			double rVecLast = rVec[ts - 1];
+			double gammaTs = (projStep < rTrendTStab) ? 0.0 : (prevalenceCurrent - prevalenceLast) * (projStep - rTrendTStab) / (DT * (prevalenceLast));
+			double logrDiff = rTrendBeta[1] * (rTrendBeta[0] - rVecLast) + rTrendBeta[2] * (prevalenceLast) + rTrendBeta[3] * gammaTs;
+			return exp(log(rVecLast) + logrDiff);
+		} else {
+			return rTrendR0;
+		}
+	}
+
+	void calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, double infectionsBySexAge[SEXES][MODEL_AGES]) {
+
+		// sum population sizes
+		double Xhivn_g[SEXES], Xhivn_incagerr[SEXES], Xhivp_noart = 0.0, Xart = 0.0;
+		for (int sex = 0; sex < SEXES; sex++) {
+			Xhivn_g[sex] = 0.0;
+			Xhivn_incagerr[sex] = 0.0;
+			for (int a = pIDX_15TO49; a < pIDX_15TO49 + pAG_15TO49; a++) {
+				Xhivn_g[sex] += population[t][HIVN][sex][a];
+				Xhivn_incagerr[sex] += incrrAge[t][sex][a] * population[t][HIVN][sex][a];
+			}
+
+			for (int ha = hIDX_15TO49; ha < hIDX_15TO49 + hAG_15TO49 + 1; ha++) {
+
+				// adjustment to first and last age group for partial year time step
+				// calculation proportion of HIV population to include / exclude based on hivpop in single-year ages.
+				double prop_include;
+				if (ha == hIDX_15TO49) {
+					double hivp_ha = 0.0;
+					for (int a = ageGroupsStart[ha]; a < ageGroupsStart[ha] + ageGroupsSpan[ha]; a++)
+						hivp_ha += population[t][HIVP][sex][a];
+					prop_include = (hivp_ha > 0) ? 1.0 - population[t][HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
+				} else if (ha == hIDX_15TO49 + hAG_15TO49) {
+					double hivp_ha = 0.0;
+					for (int a = ageGroupsStart[ha]; a < ageGroupsStart[ha] + ageGroupsSpan[ha]; a++)
+						hivp_ha += population[t][HIVP][sex][a];
+					prop_include = (hivp_ha > 0) ? population[t][HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
+				} else
+					prop_include = 1.0;
+
+				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
+					Xhivp_noart += hivPop[t][sex][ha][cd4Stage] * prop_include;
+					if (t >= timeArtStart)
+						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++)
+							Xart += artPopulation[t][sex][ha][cd4Stage][treatmentStage] * prop_include;
+				}
+			}
+		}
+		double Xhivn = Xhivn_g[MALE] + Xhivn_g[FEMALE];
+
+		// adjust HIV negative population for partial year time step
+		for (int sex = 0; sex < SEXES; sex++) {
+			Xhivn -= population[t][HIVN][sex][pIDX_15TO49] * (1.0 - DT * hts);
+			Xhivn += population[t][HIVN][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hts);
+		}
+
+		double Xtot = Xhivn + Xhivp_noart + Xart;
+		prevalenceCurrent = (Xhivp_noart + Xart) / Xtot;
+
+		incrate15To49[ts] = rVec[ts] * (Xhivp_noart + relinfectArt * Xart) / Xtot + iota;
+
+		// incidence by sex
+		double incrate15To49Sex[SEXES];
+		incrate15To49Sex[MALE] = incrate15To49[ts] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + incrrSex[t] * Xhivn_g[FEMALE]);
+		incrate15To49Sex[FEMALE] = incrate15To49[ts] * incrrSex[t] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + incrrSex[t] * Xhivn_g[FEMALE]);
+
+		// annualized infections by age and sex
+		for (int sex = 0; sex < SEXES; sex++)
+			for (int age = 0; age < MODEL_AGES; age++) {
+				infectionsBySexAge[sex][age] = population[t][HIVN][sex][age] * incrate15To49Sex[sex] * incrrAge[t][sex][age] * Xhivn_g[sex] / Xhivn_incagerr[sex];
+			}
+
+		return;
 	}
 };
 
