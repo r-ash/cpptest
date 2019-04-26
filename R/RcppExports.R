@@ -25,7 +25,7 @@ push_list_arrays <- function(lst) {
     .Call('_cpptest_push_list_arrays', PACKAGE = 'cpptest', lst)
 }
 
-runModel <- function(basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, survRate, netMigr, asfRate, sexRatioBirth, timeSteps) {
-    .Call('_cpptest_runModel', PACKAGE = 'cpptest', basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, survRate, netMigr, asfRate, sexRatioBirth, timeSteps)
+runModel <- function(basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, survRate, netMigr, asfRate, sexRatioBirth, hivStepsPerYear, cd4Prog, cd4InitDist, cd4Mort, incrrAges, relinfectArt, iota, incrrSex, incidMod, eppMod, scaleCd4Mort, projSteps, tsEpidemicStart, artCd4EligId, specPopPercentElig, pregnantWomenArtElig, who34PercentElig, rSplineRVec, rTrendBeta, rTrendTStab, rTrendR0, timeSteps) {
+    .Call('_cpptest_runModel', PACKAGE = 'cpptest', basePop, ageGroupsSpan, timeArtStart, entrantPrev, vertTransLag, paedSurveyLag, populationAdjust, entrantPop, birthLag, cumSurv, cumNetMigr, netMigrHivProb, paedSurvCd4Distrib, entrantArtCoverage, paedSurvArtCd4Distrib, survRate, netMigr, asfRate, sexRatioBirth, hivStepsPerYear, cd4Prog, cd4InitDist, cd4Mort, incrrAges, relinfectArt, iota, incrrSex, incidMod, eppMod, scaleCd4Mort, projSteps, tsEpidemicStart, artCd4EligId, specPopPercentElig, pregnantWomenArtElig, who34PercentElig, rSplineRVec, rTrendBeta, rTrendTStab, rTrendR0, timeSteps)
 }
 

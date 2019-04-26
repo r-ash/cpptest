@@ -9,7 +9,14 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
                              std::vector<double> paedSurvCd4Distrib, SEXP entrantArtCoverage,
                              std::vector<double> paedSurvArtCd4Distrib, std::vector<double> survRate,
                              std::vector<double> netMigr, std::vector<double> asfRate,
-                             std::vector<double> sexRatioBirth, int timeSteps) {
+                             std::vector<double> sexRatioBirth, int hivStepsPerYear, std::vector<double> cd4Prog,
+                             std::vector<double> cd4InitDist, std::vector<double> cd4Mort, std::vector<double> incrrAges,
+                             double relinfectArt, SEXP iota, std::vector<double> incrrSex, SEXP incidMod, int eppMod,
+                             int scaleCd4Mort, std::vector<double> projSteps, SEXP tsEpidemicStart, std::vector<int> artCd4EligId,
+                             std::vector<double> specPopPercentElig, std::vector<double> pregnantWomenArtElig,
+                             double who34PercentElig, SEXP rSplineRVec, SEXP rTrendBeta, SEXP rTrendTStab, SEXP rTrendR0,
+                             int timeSteps) {
+	Rcpp::Rcout << "Got args \n";
 	array_2d basePopulation = read_2d_array(basePop, SEXES, MODEL_AGES);
 	array_2d entrantPopulation = read_2d_array(entrantPop, PROJECTION_YEARS, SEXES);
 	array_2d birthsLag = read_2d_array(birthLag, PROJECTION_YEARS, SEXES);
@@ -22,18 +29,38 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	array_3d netMigration = read_3d_array(netMigr, PROJECTION_YEARS, SEXES, MODEL_AGES);
 	array_2d asfr = read_2d_array(asfRate, PROJECTION_YEARS, FERT_AGES);
 	array_2d sexRatioAtBirth = read_2d_array(sexRatioBirth, PROJECTION_YEARS, SEXES);
+	array_3d cd4Progression = read_3d_array(cd4Prog, SEXES, AGE_GROUPS, CD4_STAGES - 1);
+	array_3d cd4InitialDist = read_3d_array(cd4InitDist, SEXES, AGE_GROUPS, CD4_STAGES);
+	array_3d cd4Mortality = read_3d_array(cd4Mort, SEXES, AGE_GROUPS, CD4_STAGES);
+	array_3d incrrAge = read_3d_array(incrrAges, PROJECTION_YEARS, SEXES, MODEL_AGES);
+	Rcpp::Rcout << "initialising model \n";
 
 	Model model = Model(basePopulation, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
 	                    entrantPopulation, birthsLag, cumulativeSurvey, cumulativeNetMigr, netMigrHivProb,
 	                    paedSurvCd4Dist, entrantArtCov, paedSurvArtCd4Dist, survivalRate, netMigration,
-	                    asfr, sexRatioAtBirth, timeArtStart);
+	                    asfr, sexRatioAtBirth, hivStepsPerYear, cd4Progression, cd4InitialDist,
+	                    cd4Mortality, incrrAge, timeArtStart, relinfectArt, eppMod, scaleCd4Mort,
+	                    projSteps, artCd4EligId, specPopPercentElig, pregnantWomenArtElig, who34PercentElig);
 	if (entrantPrev != R_NilValue) {
 		array_2d entPrev = readEntrantPrev(entrantPrev);
 		model.setEntrantPrev(entPrev);
 	}
+	if (incidMod != R_NilValue) {
+		model.setIncrrSex(incrrSex);
+	}
+
+	if (eppMod != EPP_DIRECTINCID) {
+		model.intialiseNonDirectIncid(Rcpp::as<double>(iota), Rcpp::as<double>(tsEpidemicStart));
+	}
+	if (eppMod == EPP_RSPLINE) {
+		model.initialiseRSpline(Rcpp::as < std::vector<double> >(rSplineRVec));
+	} else if (eppMod == EPP_RTREND) {
+		model.initialiseRTrend(Rcpp::as< std::vector<double> >(rTrendBeta), Rcpp::as<double>(rTrendTStab),
+		                       Rcpp::as<double>(rTrendR0));
+	}
 
 	for (int t = 1; t <= timeSteps; t++) {
-		//Rcpp::Rcout << "Looping over time step " << t << "\n";
+		Rcpp::Rcout << "Looping over time step " << t << "\n";
 		model.agePopulation(t);
 		model.deathsAndMigration(t);
 		model.fertility(t);

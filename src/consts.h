@@ -17,6 +17,14 @@
 
 #define FERT_AGE_GROUPS 8 // hAG_FERT No of age groups for fertility
 #define hIDX_FERT 0 // hIDX_FERT 
+#define hIDX_15TO49 0
+#define hAG_15TO49  8
+
+#define hIDX_CD4_350 2
+
+#define EPP_RSPLINE 0
+#define EPP_RTREND 1
+#define EPP_DIRECTINCID 2  // annual direct incidence inputs (as Spectrum)
 
 // Below constants used for accessing data
 #define MALE 0
