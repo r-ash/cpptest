@@ -35,7 +35,8 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	array_3d incrrAge = read_3d_array(incrrAges, PROJECTION_YEARS, SEXES, MODEL_AGES);
 	Rcpp::Rcout << "initialising model \n";
 
-	Model model = Model(basePopulation, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
+	State state = State(basePopulation);
+	Model model = Model(state, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
 	                    entrantPopulation, birthsLag, cumulativeSurvey, cumulativeNetMigr, netMigrHivProb,
 	                    paedSurvCd4Dist, entrantArtCov, paedSurvArtCd4Dist, survivalRate, netMigration,
 	                    asfr, sexRatioAtBirth, hivStepsPerYear, cd4Progression, cd4InitialDist,

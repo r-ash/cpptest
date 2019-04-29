@@ -6,10 +6,14 @@
 #include "read_array.h"
 #include "consts.h"
 
+typedef boost::multi_array_types::index_range range;
+typedef array_4d::array_view<2>::type array_4d_view_2d;
 
 class Model {
 private:
-	array_4d population;
+	State state;
+	array_3d population;
+	array_3d previousPopulation;
 	std::vector<double> ageGroupsSpan;
 	int timeArtStart;
 	array_5d artPopulation;
@@ -69,7 +73,7 @@ private:
 	array_3d infections;
 
 public:
-	Model(array_2d basePopulation, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
+	Model(State modelState, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
 	      bool popAdjust, array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
 	      array_2d cumNetMigr, double netMigrationHivProb, array_3d paedSurvCd4Distrib,
 	      array_2d entrantArtCov, array_4d paedSurvArtCd4Distrib, array_3d survRate,
@@ -78,7 +82,8 @@ public:
 	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps,
 	      std::vector<int> artCd4EligibleId, std::vector<double> specPopulationPercentElig,
 	      std::vector<double> pregnantWomenArtElig, double who34PercElig)
-		: population(boost::extents[PROJECTION_YEARS][DISEASE_STATUS][SEXES][MODEL_AGES]),
+		: population(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
+		  previousPopulation(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
 		  artPopulation(boost::extents[PROJECTION_YEARS][SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
 		  hivPop(boost::extents[PROJECTION_YEARS][SEXES][AGE_GROUPS][CD4_STAGES]),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
@@ -109,6 +114,7 @@ public:
 		  rVec(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
 		  infections(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]) {
 
+		state = modelState;
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
 		netMigrHivProb = netMigrationHivProb;
@@ -143,12 +149,6 @@ public:
 		useEntrantPrev = FALSE;
 		everArtEligId = CD4_STAGES;
 
-		for (int sex = 0; sex < SEXES; sex++) {
-			for (int age = 0; age < MODEL_AGES; age++) {
-				population[0][HIVN][sex][age] = basePopulation[sex][age];
-				population[0][HIVP][sex][age] = 0.0;
-			}
-		}
 
 		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
 			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + ageGroupsSpan[ageGroup - 1];
@@ -187,6 +187,20 @@ public:
 		// Prepare outputs
 		prevalence15to49[0] = 0.0;
 	};
+
+	// Notes about model state
+	// We've talked about moving from having a dimension to track the state (i.e. every time dimension)
+	// to instead having the mdoel work with read only data from last time step and modify
+	// current time step data to get new state. We could then store the output after each time step
+	// or after every 10 or whatever choose configurably
+	// It means the model can run without this dimensions and we can separate out handling storage of
+	// this dimension into separate code.
+	// We've started implementing this but it is certianly still a WIP.
+
+	updateModelState(State state) {
+		population = state.getPopulation();
+		previousPopulation = state.getPreviousPopulation();
+	}
 
 	void setEntrantPrev(array_2d entPrev) {
 		useEntrantPrev = TRUE;
