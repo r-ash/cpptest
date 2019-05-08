@@ -65,10 +65,11 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 		model.agePopulation(t);
 		model.deathsAndMigration(t);
 		model.fertility(t);
+		model.updateModelState();
 	}
 
 	// Convert back to view for R for testing
-	std::vector<double> ret_array(PROJECTION_YEARS * DISEASE_STATUS * SEXES * MODEL_AGES);
+	std::vector<double> ret_array(DISEASE_STATUS * SEXES * MODEL_AGES);
 	double * data = model.getPopulation().data();
 	for (size_t i = 0; i < (model.getPopulation()).num_elements(); i++) {
 		ret_array[i] = data[i];

@@ -5,9 +5,7 @@
 #include <boost/multi_array.hpp>
 #include "read_array.h"
 #include "consts.h"
-
-typedef boost::multi_array_types::index_range range;
-typedef array_4d::array_view<2>::type array_4d_view_2d;
+#include "state.h"
 
 class Model {
 private:
@@ -16,11 +14,13 @@ private:
 	array_3d previousPopulation;
 	std::vector<double> ageGroupsSpan;
 	int timeArtStart;
-	array_5d artPopulation;
-	array_4d hivPop;
+	array_4d artPopulation;
+	array_4d previousArtPopulation;
+	array_3d hivPop;
+	array_3d previousHivPop;
 	bool useEntrantPrev;
 	array_2d entrantPrev;
-	array_1d previousPregnancyLag;
+	double previousPregnancyLag;
 	std::vector<double> vertTransLag;
 	std::vector<double> paedSurveyLag;
 	bool populationAdjust;
@@ -33,7 +33,7 @@ private:
 	array_2d entrantArtCoverage;
 	array_4d paedSurvArtCd4Dist;
 	array_3d survivalRate;
-	array_3d naturalDeaths;
+	array_2d naturalDeaths;
 	array_3d netMigration;
 	array_2d asfr;
 	array_2d sexRatioAtBirth;
@@ -73,7 +73,7 @@ private:
 	array_3d infections;
 
 public:
-	Model(State modelState, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
+	Model(State &modelState, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
 	      bool popAdjust, array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
 	      array_2d cumNetMigr, double netMigrationHivProb, array_3d paedSurvCd4Distrib,
 	      array_2d entrantArtCov, array_4d paedSurvArtCd4Distrib, array_3d survRate,
@@ -82,12 +82,14 @@ public:
 	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps,
 	      std::vector<int> artCd4EligibleId, std::vector<double> specPopulationPercentElig,
 	      std::vector<double> pregnantWomenArtElig, double who34PercElig)
-		: population(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
+		: state(modelState),
+		  population(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
 		  previousPopulation(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
-		  artPopulation(boost::extents[PROJECTION_YEARS][SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
-		  hivPop(boost::extents[PROJECTION_YEARS][SEXES][AGE_GROUPS][CD4_STAGES]),
+		  artPopulation(boost::extents[SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
+		  previousArtPopulation(boost::extents[SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
+		  hivPop(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
+		  previousHivPop(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
-		  previousPregnancyLag(boost::extents[PROJECTION_YEARS]),
 		  entrantPopulation(boost::extents[PROJECTION_YEARS][SEXES]),
 		  birthsLag(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeSurvey(boost::extents[PROJECTION_YEARS][SEXES]),
@@ -96,7 +98,7 @@ public:
 		  entrantArtCoverage(boost::extents[PROJECTION_YEARS][SEXES]),
 		  paedSurvArtCd4Dist(boost::extents[PROJECTION_YEARS][SEXES][CD4_STAGES][TREATMENT_STAGES]),
 		  survivalRate(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
-		  naturalDeaths(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
+		  naturalDeaths(boost::extents[SEXES][MODEL_AGES]),
 		  netMigration(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]),
 		  sexRatioAtBirth(boost::extents[PROJECTION_YEARS][SEXES]),
@@ -114,7 +116,6 @@ public:
 		  rVec(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
 		  infections(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]) {
 
-		state = modelState;
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
 		netMigrHivProb = netMigrationHivProb;
@@ -149,58 +150,34 @@ public:
 		useEntrantPrev = FALSE;
 		everArtEligId = CD4_STAGES;
 
+		initialiseState();
 
 		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
 			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + ageGroupsSpan[ageGroup - 1];
 		}
 
-		for (int sex = 0; sex < SEXES; sex++) {
-			for (int ageGroup = 0; ageGroup < AGE_GROUPS; ageGroup++) {
-				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-					hivPop[0][sex][ageGroup][cd4Stage] = 0.0;
-				}
-			}
-		}
-
-		if (timeArtStart < PROJECTION_YEARS) {
-			for (int sex = 0; sex < SEXES; sex++) {
-				for (int ageGroup = 0; ageGroup < AGE_GROUPS; ageGroup++) {
-					for (int diseaseStatus = 0; diseaseStatus < DISEASE_STATUS; diseaseStatus++) {
-						for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-							// Initialise to 0 in year of ART start
-							artPopulation[timeArtStart][sex][ageGroup][diseaseStatus][cd4Stage] = 0.0;
-						}
-					}
-				}
-			}
-		}
-
-		for (int year = 0; year < PROJECTION_YEARS; year++) {
-			previousPregnancyLag[year] = 0.0;
-			for (int sex = 0; sex < SEXES; sex++) {
-				for (int modelAge = 0; modelAge < MODEL_AGES; modelAge++) {
-					naturalDeaths[year][sex][modelAge] = 0.0;
-				}
-			}
-		}
-
 		// Prepare outputs
 		prevalence15to49[0] = 0.0;
+
 	};
 
-	// Notes about model state
-	// We've talked about moving from having a dimension to track the state (i.e. every time dimension)
-	// to instead having the mdoel work with read only data from last time step and modify
-	// current time step data to get new state. We could then store the output after each time step
-	// or after every 10 or whatever choose configurably
-	// It means the model can run without this dimensions and we can separate out handling storage of
-	// this dimension into separate code.
-	// We've started implementing this but it is certianly still a WIP.
-
-	updateModelState(State state) {
+	void initialiseState() {
 		population = state.getPopulation();
 		previousPopulation = state.getPreviousPopulation();
-	}
+		artPopulation = state.getArtPopulation();
+		previousArtPopulation = state.getPreviousArtPopulation();
+		hivPop = state.getHivPopulation();
+		previousHivPop = state.getPreviousHivPopulation();
+		previousPregnancyLag = state.getPreviousPregnancyLag();
+		naturalDeaths = state.getNaturalDeaths();
+	};
+
+	void updateModelState() {
+		state.updatePopulation(population);
+		state.updateArtPopulation(artPopulation);
+		state.updateHivPopulation(hivPop);
+		state.updateNaturalDeaths(naturalDeaths);
+	};
 
 	void setEntrantPrev(array_2d entPrev) {
 		useEntrantPrev = TRUE;
@@ -227,7 +204,7 @@ public:
 		timeEpidemicStart = tsEpidemicStart;
 	};
 
-	array_4d getPopulation() {
+	array_3d getPopulation() {
 		return population;
 	};
 
@@ -236,10 +213,10 @@ public:
 			for (int sex = 0; sex < SEXES; sex++) {
 				for (int age = 1; age < MODEL_AGES; age++) {
 					// Rcpp::Rcout << "Looping over sex " << sex << " and age " << age << " \n";
-					population[t][diseaseStatus][sex][age] = population[t - 1][diseaseStatus][sex][age - 1];
+					population[diseaseStatus][sex][age] = previousPopulation[diseaseStatus][sex][age - 1];
 				}
 				// People do not age out of final open age group (80+)
-				population[t][diseaseStatus][sex][MODEL_AGES - 1] += population[t - 1][diseaseStatus][sex][MODEL_AGES - 1];
+				population[diseaseStatus][sex][MODEL_AGES - 1] += previousPopulation[diseaseStatus][sex][MODEL_AGES - 1];
 			}
 		}
 
@@ -249,10 +226,10 @@ public:
 			for (int ageGroup = 0; ageGroup < (AGE_GROUPS - 1); ageGroup++) {
 				hivAgProb[sex][ageGroup] = 0;
 				for (int i = 0; i < ageGroupsSpan[ageGroup]; i++) {
-					hivAgProb[sex][ageGroup] += population[t - 1][HIVP][sex][a];
+					hivAgProb[sex][ageGroup] += previousPopulation[HIVP][sex][a];
 					a++;
 				}
-				hivAgProb[sex][ageGroup] = (hivAgProb[sex][ageGroup] > 0) ? population[t - 1][HIVP][sex][a - 1] / hivAgProb[sex][ageGroup] : 0;
+				hivAgProb[sex][ageGroup] = (hivAgProb[sex][ageGroup] > 0) ? previousPopulation[HIVP][sex][a - 1] / hivAgProb[sex][ageGroup] : 0;
 			}
 			// People do not age out of final open age group (80+)
 			hivAgProb[sex][AGE_GROUPS - 1] = 0.0;
@@ -261,10 +238,10 @@ public:
 		for (int sex = 0; sex < SEXES; sex++) {
 			for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
 				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-					hivPop[t][sex][ageGroup][cd4Stage] = (1 - hivAgProb[sex][ageGroup]) * hivPop[t - 1][sex][ageGroup][cd4Stage] + hivAgProb[sex][ageGroup - 1] * hivPop[t - 1][sex][ageGroup - 1][cd4Stage];
+					hivPop[sex][ageGroup][cd4Stage] = (1 - hivAgProb[sex][ageGroup]) * previousHivPop[sex][ageGroup][cd4Stage] + hivAgProb[sex][ageGroup - 1] * previousHivPop[sex][ageGroup - 1][cd4Stage];
 					if (t > timeArtStart) {
 						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-							artPopulation[t][sex][ageGroup][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][ageGroup]) * artPopulation[t - 1][sex][ageGroup][cd4Stage][treatmentStage] + hivAgProb[sex][ageGroup - 1] * artPopulation[t - 1][sex][ageGroup - 1][cd4Stage][treatmentStage];
+							artPopulation[sex][ageGroup][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][ageGroup]) * previousArtPopulation[sex][ageGroup][cd4Stage][treatmentStage] + hivAgProb[sex][ageGroup - 1] * previousArtPopulation[sex][ageGroup - 1][cd4Stage][treatmentStage];
 						}
 					}
 				}
@@ -279,28 +256,28 @@ public:
 			if (useEntrantPrev) {
 				entrantPrevalence = entrantPrev[t][sex];
 			} else {
-				entrantPrevalence = previousPregnancyLag[t - 1] * vertTransLag[t - 1] * paedSurveyLag[t - 1];
+				entrantPrevalence = previousPregnancyLag * vertTransLag[t - 1] * paedSurveyLag[t - 1];
 			}
 
 			if (populationAdjust) {
-				population[t][HIVN][sex][0] = entrantPopulation[t - 1][sex] * (1.0 - entrantPrevalence);
-				population[t][HIVP][sex][0] = entrantPopulation[t - 1][sex] * entrantPrevalence;
+				population[HIVN][sex][0] = entrantPopulation[t - 1][sex] * (1.0 - entrantPrevalence);
+				population[HIVP][sex][0] = entrantPopulation[t - 1][sex] * entrantPrevalence;
 			} else {
-				population[t][HIVN][sex][0] = birthsLag[t - 1][sex] * cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / paedSurveyLag[t - 1]) + cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * netMigrHivProb);
-				population[t][HIVP][sex][0] = birthsLag[t - 1][sex] * cumulativeSurvey[t - 1][sex] * entrantPrevalence + cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
+				population[HIVN][sex][0] = birthsLag[t - 1][sex] * cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / paedSurveyLag[t - 1]) + cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag * netMigrHivProb);
+				population[HIVP][sex][0] = birthsLag[t - 1][sex] * cumulativeSurvey[t - 1][sex] * entrantPrevalence + cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
 			}
 
-			double paedSurvPos = population[t][HIVP][sex][0];
+			double paedSurvPos = population[HIVP][sex][0];
 
-			entrantPrevOut[t] = (population[t][HIVP][MALE][0] + population[t][HIVP][FEMALE][0]) /
-			                    (population[t][HIVN][MALE][0] + population[t][HIVN][FEMALE][0] + population[t][HIVP][MALE][0] + population[t][HIVP][FEMALE][0]);
+			entrantPrevOut[t] = (population[HIVP][MALE][0] + population[HIVP][FEMALE][0]) /
+			                    (population[HIVN][MALE][0] + population[HIVN][FEMALE][0] + population[HIVP][MALE][0] + population[HIVP][FEMALE][0]);
 
 			for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-				hivPop[t][sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * hivPop[t - 1][sex][0][cd4Stage] + paedSurvPos * paedSurvCd4Dist[t][sex][cd4Stage] * (1.0 - entrantArtCoverage[t][sex]);
+				hivPop[sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * previousHivPop[sex][0][cd4Stage] + paedSurvPos * paedSurvCd4Dist[t][sex][cd4Stage] * (1.0 - entrantArtCoverage[t][sex]);
 				if (t > timeArtStart) {
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-						artPopulation[t][sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * artPopulation[t - 1][sex][0][cd4Stage][treatmentStage];
-						artPopulation[t][sex][0][cd4Stage][treatmentStage] += paedSurvPos * paedSurvArtCd4Dist[t][sex][cd4Stage][treatmentStage] * entrantArtCoverage[t][sex];
+						artPopulation[sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * previousArtPopulation[sex][0][cd4Stage][treatmentStage];
+						artPopulation[sex][0][cd4Stage][treatmentStage] += paedSurvPos * paedSurvArtCd4Dist[t][sex][cd4Stage][treatmentStage] * entrantArtCoverage[t][sex];
 					}
 				}
 			}
@@ -316,24 +293,24 @@ public:
 				double hivPopAgeGroup = 0;
 				for (int i = 0; i < ageGroupsSpan[ageGroup]; i++) {
 
-					hivPopAgeGroup += population[t][HIVP][sex][a];
+					hivPopAgeGroup += population[HIVP][sex][a];
 
 					// non-HIV mortality
 					double deathRate = 1.0 - survivalRate[t][sex][a];
-					double hivNegDeaths = population[t][HIVN][sex][a] * deathRate;
-					population[t][HIVN][sex][a] -= hivNegDeaths; // survival HIV- population
-					double hivPosDeaths = population[t][HIVP][sex][a] * deathRate;
+					double hivNegDeaths = population[HIVN][sex][a] * deathRate;
+					population[HIVN][sex][a] -= hivNegDeaths; // survival HIV- population
+					double hivPosDeaths = population[HIVP][sex][a] * deathRate;
 					deathsMigAgeGroup -= hivPosDeaths;
-					population[t][HIVP][sex][a] -= hivPosDeaths;   // survival HIV+ population
-					naturalDeaths[t][sex][a] = hivNegDeaths + hivPosDeaths;
+					population[HIVP][sex][a] -= hivPosDeaths;   // survival HIV+ population
+					naturalDeaths[sex][a] = hivNegDeaths + hivPosDeaths;
 
 					// net migration
 					// TODO: rename migrate_a and hmig_a - what do these represent?
-					double migrate_a = netMigration[t][sex][a] * (1 + survivalRate[t][sex][a]) / 2.0 / (population[t][HIVN][sex][a] + population[t][HIVP][sex][a]);
-					population[t][HIVN][sex][a] *= 1 + migrate_a;
-					double hmig_a = migrate_a * population[t][HIVP][sex][a];
+					double migrate_a = netMigration[t][sex][a] * (1 + survivalRate[t][sex][a]) / 2.0 / (population[HIVN][sex][a] + population[HIVP][sex][a]);
+					population[HIVN][sex][a] *= 1 + migrate_a;
+					double hmig_a = migrate_a * population[HIVP][sex][a];
 					deathsMigAgeGroup += hmig_a;
-					population[t][HIVP][sex][a] += hmig_a;
+					population[HIVP][sex][a] += hmig_a;
 
 					a++;
 				}
@@ -341,10 +318,10 @@ public:
 				// migration and deaths for hivpop
 				double hivPopDeathsMigrRate = hivPopAgeGroup > 0 ? deathsMigAgeGroup / hivPopAgeGroup : 0.0;
 				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-					hivPop[t][sex][ageGroup][cd4Stage] *= 1 + hivPopDeathsMigrRate;
+					hivPop[sex][ageGroup][cd4Stage] *= 1 + hivPopDeathsMigrRate;
 					if (t > timeArtStart) {
 						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-							artPopulation[t][sex][ageGroup][cd4Stage][treatmentStage] *= 1 + hivPopDeathsMigrRate;
+							artPopulation[sex][ageGroup][cd4Stage][treatmentStage] *= 1 + hivPopDeathsMigrRate;
 						}
 					}
 				}
@@ -360,7 +337,7 @@ public:
 			int a = pIDX_FERT;
 			for (int ha = hIDX_FERT; ha < hIDX_FERT + FERT_AGE_GROUPS; ha++) {
 				for (int i = 0; i < ageGroupsSpan[ha]; i++) {
-					birthsByAgeGroup[ha - hIDX_FERT] += (population[t - 1][diseaseStatus][FEMALE][a] + population[t][diseaseStatus][FEMALE][a]) / 2 * asfr[t][a];
+					birthsByAgeGroup[ha - hIDX_FERT] += (previousPopulation[diseaseStatus][FEMALE][a] + population[diseaseStatus][FEMALE][a]) / 2 * asfr[t][a];
 					a++;
 				}
 			}
@@ -394,18 +371,18 @@ public:
 						if (scaleCd4Mortality & (t >= timeArtStart) & (cd4Stage >= everArtEligId)) {
 							double artPopAgeSex = 0.0;
 							for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-								artPopAgeSex += artPopulation[t][sex][ageGroup][cd4Stage][treatmentStage];
+								artPopAgeSex += artPopulation[sex][ageGroup][cd4Stage][treatmentStage];
 							}
-							cd4mxScale = hivPop[t][sex][ageGroup][cd4Stage] / (hivPop[t][sex][ageGroup][cd4Stage] + artPopAgeSex);
+							cd4mxScale = hivPop[sex][ageGroup][cd4Stage] / (hivPop[sex][ageGroup][cd4Stage] + artPopAgeSex);
 						}
 
-						double deaths = cd4mxScale * cd4Mortality[sex][ageGroup][cd4Stage] * hivPop[t][sex][ageGroup][cd4Stage];
+						double deaths = cd4mxScale * cd4Mortality[sex][ageGroup][cd4Stage] * hivPop[sex][ageGroup][cd4Stage];
 						hivDeathsByAgeGroup[sex][ageGroup] += DT * deaths;
 						grad[sex][ageGroup][cd4Stage] = -deaths;
 					}
 					for (int cd4Stage = 1; cd4Stage < CD4_STAGES; cd4Stage++) {
-						grad[sex][ageGroup][cd4Stage - 1] -= cd4Progression[sex][ageGroup][cd4Stage - 1] * hivPop[t][sex][ageGroup][cd4Stage - 1];
-						grad[sex][ageGroup][cd4Stage] += cd4Progression[sex][ageGroup][cd4Stage - 1] * hivPop[t][sex][ageGroup][cd4Stage - 1];
+						grad[sex][ageGroup][cd4Stage - 1] -= cd4Progression[sex][ageGroup][cd4Stage - 1] * hivPop[sex][ageGroup][cd4Stage - 1];
+						grad[sex][ageGroup][cd4Stage] += cd4Progression[sex][ageGroup][cd4Stage - 1] * hivPop[sex][ageGroup][cd4Stage - 1];
 					}
 				}
 			}
@@ -417,7 +394,7 @@ public:
 				if (eppMod == EPP_RSPLINE) {
 					rVec[ts] = rSplineRVec[ts];
 				} else {
-					rVec[ts] = calcRtrendRt(t, hivStep, ts);
+					rVec[ts] = calcRtrendRt(hivStep, ts);
 				}
 
 				// calculate new infections by sex and age
@@ -437,8 +414,8 @@ public:
 						for (int i = 0; i < ageGroupsSpan[ageGroup]; i++) {
 							infectionsPerAgeGroup += infectionsBySexAge[sex][a];
 							infections[t][sex][a] += DT * infectionsBySexAge[sex][a];
-							population[t][HIVN][sex][a] -= DT * infectionsBySexAge[sex][a];
-							population[t][HIVP][sex][a] += DT * infectionsBySexAge[sex][a];
+							population[HIVN][sex][a] -= DT * infectionsBySexAge[sex][a];
+							population[HIVP][sex][a] += DT * infectionsBySexAge[sex][a];
 							a++;
 						}
 						if (ageGroup < hIDX_15TO49 + hAG_15TO49 ) {
@@ -455,21 +432,21 @@ public:
 		}
 	}
 
-	double calcRtrendRt(int t, int hivStep, int ts) {
+	double calcRtrendRt(int hivStep, int ts) {
 		// sum population sizes
 		double Xhivn = 0.0, Xhivp = 0.0;
 		for (int sex = 0; sex < SEXES; sex++)
 			for (int a = pIDX_15TO49; a < pIDX_15TO49 + pAG_15TO49; a++) {
-				Xhivn += population[t][HIVN][sex][a];
-				Xhivp += population[t][HIVP][sex][a];
+				Xhivn += population[HIVN][sex][a];
+				Xhivp += population[HIVP][sex][a];
 			}
 
 		// adjust HIV population for partial year time step
 		for (int sex = 0; sex < SEXES; sex++) {
-			Xhivn -= population[t][HIVN][sex][pIDX_15TO49] * (1.0 - DT * hivStep);
-			Xhivp -= population[t][HIVP][sex][pIDX_15TO49] * (1.0 - DT * hivStep);
-			Xhivn += population[t][HIVN][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hivStep);
-			Xhivp += population[t][HIVP][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hivStep);
+			Xhivn -= population[HIVN][sex][pIDX_15TO49] * (1.0 - DT * hivStep);
+			Xhivp -= population[HIVP][sex][pIDX_15TO49] * (1.0 - DT * hivStep);
+			Xhivn += population[HIVN][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hivStep);
+			Xhivp += population[HIVP][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hivStep);
 		}
 
 		double Xtot = Xhivn + Xhivp;
@@ -497,8 +474,8 @@ public:
 			Xhivn_g[sex] = 0.0;
 			Xhivn_incagerr[sex] = 0.0;
 			for (int a = pIDX_15TO49; a < pIDX_15TO49 + pAG_15TO49; a++) {
-				Xhivn_g[sex] += population[t][HIVN][sex][a];
-				Xhivn_incagerr[sex] += incrrAge[t][sex][a] * population[t][HIVN][sex][a];
+				Xhivn_g[sex] += population[HIVN][sex][a];
+				Xhivn_incagerr[sex] += incrrAge[t][sex][a] * population[HIVN][sex][a];
 			}
 
 			for (int ha = hIDX_15TO49; ha < hIDX_15TO49 + hAG_15TO49 + 1; ha++) {
@@ -509,21 +486,21 @@ public:
 				if (ha == hIDX_15TO49) {
 					double hivp_ha = 0.0;
 					for (int a = ageGroupsStart[ha]; a < ageGroupsStart[ha] + ageGroupsSpan[ha]; a++)
-						hivp_ha += population[t][HIVP][sex][a];
-					prop_include = (hivp_ha > 0) ? 1.0 - population[t][HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
+						hivp_ha += population[HIVP][sex][a];
+					prop_include = (hivp_ha > 0) ? 1.0 - population[HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
 				} else if (ha == hIDX_15TO49 + hAG_15TO49) {
 					double hivp_ha = 0.0;
 					for (int a = ageGroupsStart[ha]; a < ageGroupsStart[ha] + ageGroupsSpan[ha]; a++)
-						hivp_ha += population[t][HIVP][sex][a];
-					prop_include = (hivp_ha > 0) ? population[t][HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
+						hivp_ha += population[HIVP][sex][a];
+					prop_include = (hivp_ha > 0) ? population[HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
 				} else
 					prop_include = 1.0;
 
 				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-					Xhivp_noart += hivPop[t][sex][ha][cd4Stage] * prop_include;
+					Xhivp_noart += hivPop[sex][ha][cd4Stage] * prop_include;
 					if (t >= timeArtStart)
 						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++)
-							Xart += artPopulation[t][sex][ha][cd4Stage][treatmentStage] * prop_include;
+							Xart += artPopulation[sex][ha][cd4Stage][treatmentStage] * prop_include;
 				}
 			}
 		}
@@ -531,8 +508,8 @@ public:
 
 		// adjust HIV negative population for partial year time step
 		for (int sex = 0; sex < SEXES; sex++) {
-			Xhivn -= population[t][HIVN][sex][pIDX_15TO49] * (1.0 - DT * hts);
-			Xhivn += population[t][HIVN][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hts);
+			Xhivn -= population[HIVN][sex][pIDX_15TO49] * (1.0 - DT * hts);
+			Xhivn += population[HIVN][sex][pIDX_15TO49 + pAG_15TO49] * (1.0 - DT * hts);
 		}
 
 		double Xtot = Xhivn + Xhivp_noart + Xart;
@@ -548,7 +525,7 @@ public:
 		// annualized infections by age and sex
 		for (int sex = 0; sex < SEXES; sex++)
 			for (int age = 0; age < MODEL_AGES; age++) {
-				infectionsBySexAge[sex][age] = population[t][HIVN][sex][age] * incrate15To49Sex[sex] * incrrAge[t][sex][age] * Xhivn_g[sex] / Xhivn_incagerr[sex];
+				infectionsBySexAge[sex][age] = population[HIVN][sex][age] * incrate15To49Sex[sex] * incrrAge[t][sex][age] * Xhivn_g[sex] / Xhivn_incagerr[sex];
 			}
 
 		return;

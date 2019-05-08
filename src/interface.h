@@ -4,6 +4,7 @@
 #include <Rcpp.h>
 #include "read_array.h"
 #include "model.h"
+#include "state.h"
 
 std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart,
                              SEXP entrantPrev, std::vector<double> vertTransLag, std::vector<double> paedSurveyLag,

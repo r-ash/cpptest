@@ -6,7 +6,7 @@
 #define AGE_START 15
 #define DISEASE_STATUS 2 // pDS - HIV positive, HIV negative
 #define SEXES 2  // NG - Male, Female
-#define MODEL_AGES 66 // pAG - 15, 16, ..., 78, 79, 80, 80+
+#define MODEL_AGES 66 // pAG - 15, 16, ..., 78, 79, 80+
 #define PROJECTION_YEARS 56 // PROJ_YEARS - 1970, 1971, ...
 #define AGE_GROUPS 9 // hAG 15-19, 20-24, 25-29, ..., 45-49, 50+
 #define CD4_STAGES 7 // hDS CD4 count stages

@@ -25,8 +25,7 @@ test_run_model <- function(timesteps) {
   inputs <- readRDS(system.file("direct_incidence_model_input.rds", package = "cpptest"))
   pop_dims <- list("ages" = 15:80,
                    "sexes" = c("Male", "Female"),
-                   "hiv_status" = c("HIVN", "HIVP"),
-                   "proj_years" = 1970:2025)
+                   "hiv_status" = c("HIVN", "HIVP"))
   inputs$eppmodInt <- match(inputs$eppmod, c("rtrend", "directincid"), nomatch = 0)
   inputs$incidmodInt <- match(inputs$incidmod, c("eppspectrum")) - 1L
   model_run <- runModel(inputs$basepop, inputs$ss$h.ag.span, inputs$tARTstart,
