@@ -52,11 +52,11 @@ void Model::agePopulation(int t) {
 		}
 
 		if (populationAdjust) {
-			state.population[HIVN][sex][0] = entrantPopulation[t - 1][sex] * (1.0 - entrantPrevalence);
-			state.population[HIVP][sex][0] = entrantPopulation[t - 1][sex] * entrantPrevalence;
+			state.population[HIVN][sex][0] = pop.entrantPopulation[t - 1][sex] * (1.0 - entrantPrevalence);
+			state.population[HIVP][sex][0] = pop.entrantPopulation[t - 1][sex] * entrantPrevalence;
 		} else {
-			state.population[HIVN][sex][0] = birthsLag[t - 1][sex] * cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / paedSurveyLag[t - 1]) + cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * netMigrHivProb);
-			state.population[HIVP][sex][0] = birthsLag[t - 1][sex] * cumulativeSurvey[t - 1][sex] * entrantPrevalence + cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
+			state.population[HIVN][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / paedSurveyLag[t - 1]) + pop.cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * netMigrHivProb);
+			state.population[HIVP][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * entrantPrevalence + pop.cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
 		}
 
 		double paedSurvPos = state.population[HIVP][sex][0];
@@ -88,7 +88,7 @@ void Model::deathsAndMigration(int t) {
 				hivPopAgeGroup += state.population[HIVP][sex][a];
 
 				// non-HIV mortality
-				double deathRate = 1.0 - survivalRate[t][sex][a];
+				double deathRate = 1.0 - pop.survivalRate[t][sex][a];
 				double hivNegDeaths = state.population[HIVN][sex][a] * deathRate;
 				state.population[HIVN][sex][a] -= hivNegDeaths; // survival HIV- population
 				double hivPosDeaths = state.population[HIVP][sex][a] * deathRate;
@@ -98,7 +98,7 @@ void Model::deathsAndMigration(int t) {
 
 				// net migration
 				// TODO: rename migrate_a and hmig_a - what do these represent?
-				double migrate_a = netMigration[t][sex][a] * (1 + survivalRate[t][sex][a]) / 2.0 / (state.population[HIVN][sex][a] + state.population[HIVP][sex][a]);
+				double migrate_a = pop.netMigration[t][sex][a] * (1 + pop.survivalRate[t][sex][a]) / 2.0 / (state.population[HIVN][sex][a] + state.population[HIVP][sex][a]);
 				state.population[HIVN][sex][a] *= 1 + migrate_a;
 				double hmig_a = migrate_a * state.population[HIVP][sex][a];
 				deathsMigAgeGroup += hmig_a;
@@ -129,7 +129,7 @@ void Model::fertility(int t) {
 		int a = pIDX_FERT;
 		for (int ha = hIDX_FERT; ha < hIDX_FERT + FERT_AGE_GROUPS; ha++) {
 			for (int i = 0; i < ageGroupsSpan[ha]; i++) {
-				birthsByAgeGroup[ha - hIDX_FERT] += (state.previousPopulation[diseaseStatus][FEMALE][a] + state.population[diseaseStatus][FEMALE][a]) / 2 * asfr[t][a];
+				birthsByAgeGroup[ha - hIDX_FERT] += (state.previousPopulation[diseaseStatus][FEMALE][a] + state.population[diseaseStatus][FEMALE][a]) / 2 * pop.asfr[t][a];
 				a++;
 			}
 		}
@@ -140,7 +140,7 @@ void Model::fertility(int t) {
 
 	if (t + AGE_START < PROJECTION_YEARS) {
 		for (int sex = 0; sex < SEXES; sex++) {
-			birthsLag[t + AGE_START - 1][sex] = sexRatioAtBirth[t][sex] * births;
+			pop.birthsLag[t + AGE_START - 1][sex] = pop.sexRatioAtBirth[t][sex] * births;
 		}
 	}
 }

@@ -9,6 +9,7 @@
 #include "ArtData.h"
 #include "Cd4Data.h"
 #include "InfectionData.h"
+#include "PopulationData.h"
 
 class Model {
 private:
@@ -20,15 +21,7 @@ private:
 	std::vector<double> vertTransLag;
 	std::vector<double> paedSurveyLag;
 	bool populationAdjust;
-	array_2d entrantPopulation;
-	array_2d birthsLag;
-	array_2d cumulativeSurvey;
-	array_2d cumulativeNetMigr;
 	double netMigrHivProb;
-	array_3d survivalRate;
-	array_3d netMigration;
-	array_2d asfr;
-	array_2d sexRatioAtBirth;
 	const int HIVSTEPS_PER_YEAR;
 	const int DT;
 	double relinfectArt;
@@ -58,28 +51,20 @@ public:
 	ArtData art;
 	Cd4Data cd4;
 	InfectionData infection;
-	Model(State modelState, ArtData artData, Cd4Data cd4Data, InfectionData infectionData,
+	PopulationData pop;
+	Model(State modelState, ArtData artData, Cd4Data cd4Data, InfectionData infectionData, PopulationData populationData,
 	      std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
-	      bool popAdjust, array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
-	      array_2d cumNetMigr, double netMigrationHivProb,
-	      array_3d survRate,
-	      array_3d netMigr, array_2d asfRate, array_2d sexRatioBirth, int hivStepsPerYear,
+	      bool popAdjust, double netMigrationHivProb,
+	      int hivStepsPerYear,
 	      int tArtStart,
 	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps)
 		: state(modelState),
 		  art(artData),
 		  cd4(cd4Data),
 		  infection(infectionData),
+		  pop(populationData),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
-		  entrantPopulation(boost::extents[PROJECTION_YEARS][SEXES]),
-		  birthsLag(boost::extents[PROJECTION_YEARS][SEXES]),
-		  cumulativeSurvey(boost::extents[PROJECTION_YEARS][SEXES]),
-		  cumulativeNetMigr(boost::extents[PROJECTION_YEARS][SEXES]),
-		  survivalRate(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
-		  netMigration(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
-		  asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]),
-		  sexRatioAtBirth(boost::extents[PROJECTION_YEARS][SEXES]),
 		  HIVSTEPS_PER_YEAR(hivStepsPerYear),
 		  DT(1.0 / HIVSTEPS_PER_YEAR),
 		  ageGroupsStart(AGE_GROUPS, 0),
@@ -93,16 +78,8 @@ public:
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
 		netMigrHivProb = netMigrationHivProb;
-		survivalRate = survRate;
 		vertTransLag = vertTLag;
 		paedSurveyLag = paedSurvLag;
-		entrantPopulation = entrantPop;
-		birthsLag = birthLag;
-		cumulativeSurvey = cumSurvey;
-		cumulativeNetMigr = cumNetMigr;
-		netMigration = netMigr;
-		asfr = asfRate;
-		sexRatioAtBirth = sexRatioBirth;
 		relinfectArt = artRelinfect;
 		eppMod = eppModel;
 		scaleCd4Mortality = scaleCd4Mort;
