@@ -96,7 +96,7 @@ public:
 
 	void updateModelState(int t) {
 		state.updatePopulation(t);
-		state.updateArtPopulation(art.population);
+		state.updateArtPopulation();
 		state.updateHivPopulation();
 		state.updateNaturalDeaths();
 		state.updateInfections();

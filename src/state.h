@@ -15,16 +15,18 @@ public:
 	array_3d population;
 	array_3d previousPopulation;
 	array_4d outputPopulation;
+	array_4d artPopulation;
 	array_4d previousArtPopulation;
 	array_3d hivPop;
 	array_3d previousHivPop;
 	array_2d naturalDeaths;
 	array_2d infections;
 
-	State(array_2d basePopulation, array_4d artPopulation) :
+	State(array_2d basePopulation) :
 		population(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
 		previousPopulation(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
 		outputPopulation(boost::extents[PROJECTION_YEARS][DISEASE_STATUS][SEXES][MODEL_AGES]),
+		artPopulation(boost::extents[SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
 		previousArtPopulation(boost::extents[SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
 		hivPop(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
 		previousHivPop(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
@@ -47,6 +49,16 @@ public:
 		array_4d_view_3d firstYearPopulation = outputPopulation[ boost::indices[0][range(0, DISEASE_STATUS)][range(0, SEXES)][range(0, MODEL_AGES)] ];
 		firstYearPopulation = population;
 
+		for (int sex = 0; sex < SEXES; sex++) {
+			for (int ageGroup = 0; ageGroup < AGE_GROUPS; ageGroup++) {
+				for (int diseaseStatus = 0; diseaseStatus < DISEASE_STATUS; diseaseStatus++) {
+					for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
+						// Initialise to 0 in year of ART start
+						artPopulation[sex][ageGroup][diseaseStatus][cd4Stage] = 0.0;
+					}
+				}
+			}
+		}
 		previousArtPopulation = artPopulation;
 
 		for (int sex = 0; sex < SEXES; sex++) {
@@ -64,12 +76,13 @@ public:
 	}
 
 	void updatePopulation(int t) {
+		Rcpp::Rcout << "Updating population with time t = " << t << "\n";
 		previousPopulation = population;
 		array_4d_view_3d tPopulation = outputPopulation[ boost::indices[t][range(0, DISEASE_STATUS)][range(0, SEXES)][range(0, MODEL_AGES)] ];
 		tPopulation = population;
 	}
 
-	void updateArtPopulation(array_4d artPopulation) {
+	void updateArtPopulation() {
 		previousArtPopulation = artPopulation;
 	}
 

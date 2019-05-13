@@ -33,7 +33,7 @@ void Model::agePopulation(int t) {
 				state.hivPop[sex][ageGroup][cd4Stage] = (1 - hivAgProb[sex][ageGroup]) * state.previousHivPop[sex][ageGroup][cd4Stage] + hivAgProb[sex][ageGroup - 1] * state.previousHivPop[sex][ageGroup - 1][cd4Stage];
 				if (t > timeArtStart) {
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-						art.population[sex][ageGroup][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][ageGroup]) * state.previousArtPopulation[sex][ageGroup][cd4Stage][treatmentStage] + hivAgProb[sex][ageGroup - 1] * state.previousArtPopulation[sex][ageGroup - 1][cd4Stage][treatmentStage];
+						state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][ageGroup]) * state.previousArtPopulation[sex][ageGroup][cd4Stage][treatmentStage] + hivAgProb[sex][ageGroup - 1] * state.previousArtPopulation[sex][ageGroup - 1][cd4Stage][treatmentStage];
 					}
 				}
 			}
@@ -68,8 +68,8 @@ void Model::agePopulation(int t) {
 			state.hivPop[sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * state.previousHivPop[sex][0][cd4Stage] + paedSurvPos * cd4.paedSurvDist[t][sex][cd4Stage] * (1.0 - art.entrantCoverage[t][sex]);
 			if (t > timeArtStart) {
 				for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-					art.population[sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * state.previousArtPopulation[sex][0][cd4Stage][treatmentStage];
-					art.population[sex][0][cd4Stage][treatmentStage] += paedSurvPos * art.paedSurvArtCd4Dist[t][sex][cd4Stage][treatmentStage] * art.entrantCoverage[t][sex];
+					state.artPopulation[sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * state.previousArtPopulation[sex][0][cd4Stage][treatmentStage];
+					state.artPopulation[sex][0][cd4Stage][treatmentStage] += paedSurvPos * art.paedSurvArtCd4Dist[t][sex][cd4Stage][treatmentStage] * art.entrantCoverage[t][sex];
 				}
 			}
 		}
@@ -113,7 +113,7 @@ void Model::deathsAndMigration(int t) {
 				state.hivPop[sex][ageGroup][cd4Stage] *= 1 + hivPopDeathsMigrRate;
 				if (t > timeArtStart) {
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-						art.population[sex][ageGroup][cd4Stage][treatmentStage] *= 1 + hivPopDeathsMigrRate;
+						state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage] *= 1 + hivPopDeathsMigrRate;
 					}
 				}
 			}
@@ -160,7 +160,7 @@ void Model::diseaseProgression(int t) {
 					if (scaleCd4Mortality & (t >= timeArtStart) & (cd4Stage >= art.everArtEligId)) {
 						double artPopAgeSex = 0.0;
 						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-							artPopAgeSex += art.population[sex][ageGroup][cd4Stage][treatmentStage];
+							artPopAgeSex += state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage];
 						}
 						cd4mxScale = state.hivPop[sex][ageGroup][cd4Stage] / (state.hivPop[sex][ageGroup][cd4Stage] + artPopAgeSex);
 					}
@@ -289,7 +289,7 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 				Xhivp_noart += state.hivPop[sex][ha][cd4Stage] * prop_include;
 				if (t >= timeArtStart)
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++)
-						Xart += art.population[sex][ha][cd4Stage][treatmentStage] * prop_include;
+						Xart += state.artPopulation[sex][ha][cd4Stage][treatmentStage] * prop_include;
 			}
 		}
 	}
