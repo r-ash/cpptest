@@ -6,6 +6,8 @@
 #include "model.h"
 #include "state.h"
 #include "ArtData.h"
+#include "Cd4Data.h"
+#include "InfectionData.h"
 
 std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart,
                              SEXP entrantPrev, std::vector<double> vertTransLag, std::vector<double> paedSurveyLag,

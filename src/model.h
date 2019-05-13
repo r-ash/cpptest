@@ -7,6 +7,8 @@
 #include "consts.h"
 #include "state.h"
 #include "ArtData.h"
+#include "Cd4Data.h"
+#include "InfectionData.h"
 
 class Model {
 private:
@@ -23,21 +25,14 @@ private:
 	array_2d cumulativeSurvey;
 	array_2d cumulativeNetMigr;
 	double netMigrHivProb;
-	array_3d paedSurvCd4Dist;
 	array_3d survivalRate;
 	array_3d netMigration;
 	array_2d asfr;
 	array_2d sexRatioAtBirth;
 	const int HIVSTEPS_PER_YEAR;
 	const int DT;
-	array_3d cd4Progression;
-	array_3d cd4InitialDist;
-	array_3d cd4Mortality;
-	array_3d incrrAge;
 	double relinfectArt;
 	double iota;
-	std::vector<double> incrrSex;
-	bool incidMod;
 	int eppMod;
 	int scaleCd4Mortality;
 	std::vector<double> projectionSteps;
@@ -61,32 +56,32 @@ private:
 public:
 	State state;
 	ArtData art;
-	Model(State modelState, ArtData artData, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
+	Cd4Data cd4;
+	InfectionData infection;
+	Model(State modelState, ArtData artData, Cd4Data cd4Data, InfectionData infectionData,
+	      std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
 	      bool popAdjust, array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
-	      array_2d cumNetMigr, double netMigrationHivProb, array_3d paedSurvCd4Distrib,
+	      array_2d cumNetMigr, double netMigrationHivProb,
 	      array_3d survRate,
 	      array_3d netMigr, array_2d asfRate, array_2d sexRatioBirth, int hivStepsPerYear,
-	      array_3d cd4Prog, array_3d cd4InitDist, array_3d cd4Mort, array_3d incrrAges, int tArtStart,
+	      int tArtStart,
 	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps)
 		: state(modelState),
 		  art(artData),
+		  cd4(cd4Data),
+		  infection(infectionData),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
 		  entrantPopulation(boost::extents[PROJECTION_YEARS][SEXES]),
 		  birthsLag(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeSurvey(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeNetMigr(boost::extents[PROJECTION_YEARS][SEXES]),
-		  paedSurvCd4Dist(boost::extents[PROJECTION_YEARS][SEXES][CD4_STAGES]),
 		  survivalRate(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  netMigration(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]),
 		  sexRatioAtBirth(boost::extents[PROJECTION_YEARS][SEXES]),
 		  HIVSTEPS_PER_YEAR(hivStepsPerYear),
 		  DT(1.0 / HIVSTEPS_PER_YEAR),
-		  cd4Progression(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES - 1]),
-		  cd4InitialDist(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
-		  cd4Mortality(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
-		  incrrAge(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  ageGroupsStart(AGE_GROUPS, 0),
 		  entrantPrevOut(boost::extents[PROJECTION_YEARS]),
 		  incidence15to49(boost::extents[PROJECTION_YEARS]),
@@ -105,20 +100,14 @@ public:
 		birthsLag = birthLag;
 		cumulativeSurvey = cumSurvey;
 		cumulativeNetMigr = cumNetMigr;
-		paedSurvCd4Dist = paedSurvCd4Distrib;
 		netMigration = netMigr;
 		asfr = asfRate;
 		sexRatioAtBirth = sexRatioBirth;
-		cd4Progression = cd4Prog;
-		cd4InitialDist = cd4InitDist;
-		cd4Mortality = cd4Mort;
-		incrrAge = incrrAges;
 		relinfectArt = artRelinfect;
 		eppMod = eppModel;
 		scaleCd4Mortality = scaleCd4Mort;
 		projectionSteps = projSteps;
 		ageGroupsSpan = ageGroupsSp;
-		incidMod = FALSE;
 		prevalenceCurrent = 0.0;
 		useEntrantPrev = FALSE;
 
@@ -145,8 +134,8 @@ public:
 	};
 
 	void setIncrrSex(std::vector<double> incrrSexRatio) {
-		incidMod = TRUE;
-		incrrSex = incrrSexRatio;
+		infection.incidMod = TRUE;
+		infection.incrrSex = incrrSexRatio;
 	}
 
 	void initialiseRSpline(std::vector<double> rSplineVec) {

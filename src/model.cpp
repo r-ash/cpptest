@@ -65,7 +65,7 @@ void Model::agePopulation(int t) {
 		                    (state.population[HIVN][MALE][0] + state.population[HIVN][FEMALE][0] + state.population[HIVP][MALE][0] + state.population[HIVP][FEMALE][0]);
 
 		for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-			state.hivPop[sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * state.previousHivPop[sex][0][cd4Stage] + paedSurvPos * paedSurvCd4Dist[t][sex][cd4Stage] * (1.0 - art.entrantCoverage[t][sex]);
+			state.hivPop[sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * state.previousHivPop[sex][0][cd4Stage] + paedSurvPos * cd4.paedSurvDist[t][sex][cd4Stage] * (1.0 - art.entrantCoverage[t][sex]);
 			if (t > timeArtStart) {
 				for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
 					art.population[sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * state.previousArtPopulation[sex][0][cd4Stage][treatmentStage];
@@ -165,13 +165,13 @@ void Model::diseaseProgression(int t) {
 						cd4mxScale = state.hivPop[sex][ageGroup][cd4Stage] / (state.hivPop[sex][ageGroup][cd4Stage] + artPopAgeSex);
 					}
 
-					double deaths = cd4mxScale * cd4Mortality[sex][ageGroup][cd4Stage] * state.hivPop[sex][ageGroup][cd4Stage];
+					double deaths = cd4mxScale * cd4.mortality[sex][ageGroup][cd4Stage] * state.hivPop[sex][ageGroup][cd4Stage];
 					hivDeathsByAgeGroup[sex][ageGroup] += DT * deaths;
 					grad[sex][ageGroup][cd4Stage] = -deaths;
 				}
 				for (int cd4Stage = 1; cd4Stage < CD4_STAGES; cd4Stage++) {
-					grad[sex][ageGroup][cd4Stage - 1] -= cd4Progression[sex][ageGroup][cd4Stage - 1] * state.hivPop[sex][ageGroup][cd4Stage - 1];
-					grad[sex][ageGroup][cd4Stage] += cd4Progression[sex][ageGroup][cd4Stage - 1] * state.hivPop[sex][ageGroup][cd4Stage - 1];
+					grad[sex][ageGroup][cd4Stage - 1] -= cd4.progression[sex][ageGroup][cd4Stage - 1] * state.hivPop[sex][ageGroup][cd4Stage - 1];
+					grad[sex][ageGroup][cd4Stage] += cd4.progression[sex][ageGroup][cd4Stage - 1] * state.hivPop[sex][ageGroup][cd4Stage - 1];
 				}
 			}
 		}
@@ -188,7 +188,7 @@ void Model::diseaseProgression(int t) {
 
 			// calculate new infections by sex and age
 			double infectionsBySexAge[SEXES][MODEL_AGES];
-			if (incidMod) {
+			if (infection.incidMod) {
 				calcInfectionsEppSpectrum((projectionSteps[ts] == timeEpidemicStart) ? iota : 0.0,
 				                          t, hivStep, ts, infectionsBySexAge);
 			}
@@ -213,7 +213,7 @@ void Model::diseaseProgression(int t) {
 
 					// add infections to grad hivpop
 					for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-						grad[sex][ageGroup][cd4Stage] += infectionsPerAgeGroup * cd4InitialDist[sex][ageGroup][cd4Stage];
+						grad[sex][ageGroup][cd4Stage] += infectionsPerAgeGroup * cd4.initialDist[sex][ageGroup][cd4Stage];
 					}
 				}
 			}
@@ -264,7 +264,7 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 		Xhivn_incagerr[sex] = 0.0;
 		for (int a = pIDX_15TO49; a < pIDX_15TO49 + pAG_15TO49; a++) {
 			Xhivn_g[sex] += state.population[HIVN][sex][a];
-			Xhivn_incagerr[sex] += incrrAge[t][sex][a] * state.population[HIVN][sex][a];
+			Xhivn_incagerr[sex] += infection.incrrAge[t][sex][a] * state.population[HIVN][sex][a];
 		}
 
 		for (int ha = hIDX_15TO49; ha < hIDX_15TO49 + hAG_15TO49 + 1; ha++) {
@@ -308,13 +308,13 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 
 	// incidence by sex
 	double incrate15To49Sex[SEXES];
-	incrate15To49Sex[MALE] = incrate15To49[ts] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + incrrSex[t] * Xhivn_g[FEMALE]);
-	incrate15To49Sex[FEMALE] = incrate15To49[ts] * incrrSex[t] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + incrrSex[t] * Xhivn_g[FEMALE]);
+	incrate15To49Sex[MALE] = incrate15To49[ts] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + infection.incrrSex[t] * Xhivn_g[FEMALE]);
+	incrate15To49Sex[FEMALE] = incrate15To49[ts] * infection.incrrSex[t] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + infection.incrrSex[t] * Xhivn_g[FEMALE]);
 
 	// annualized infections by age and sex
 	for (int sex = 0; sex < SEXES; sex++)
 		for (int age = 0; age < MODEL_AGES; age++) {
-			infectionsBySexAge[sex][age] = state.population[HIVN][sex][age] * incrate15To49Sex[sex] * incrrAge[t][sex][age] * Xhivn_g[sex] / Xhivn_incagerr[sex];
+			infectionsBySexAge[sex][age] = state.population[HIVN][sex][age] * incrate15To49Sex[sex] * infection.incrrAge[t][sex][age] * Xhivn_g[sex] / Xhivn_incagerr[sex];
 		}
 
 	return;
