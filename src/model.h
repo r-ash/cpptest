@@ -6,6 +6,7 @@
 #include "read_array.h"
 #include "consts.h"
 #include "state.h"
+#include "ArtData.h"
 
 class Model {
 private:
@@ -23,8 +24,6 @@ private:
 	array_2d cumulativeNetMigr;
 	double netMigrHivProb;
 	array_3d paedSurvCd4Dist;
-	array_2d entrantArtCoverage;
-	array_4d paedSurvArtCd4Dist;
 	array_3d survivalRate;
 	array_3d netMigration;
 	array_2d asfr;
@@ -43,11 +42,6 @@ private:
 	int scaleCd4Mortality;
 	std::vector<double> projectionSteps;
 	double timeEpidemicStart;
-	int everArtEligId;
-	std::vector<int> artCd4EligId;
-	std::vector<double> specPopPercentElig;
-	std::vector<double> pregnantArtElig;
-	double who34PercentElig;
 	double prevalenceCurrent;
 	// Store prevalence at last time step for r-trend model
 	double prevalenceLast;
@@ -66,16 +60,16 @@ private:
 
 public:
 	State state;
-	Model(State modelState, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
+	ArtData art;
+	Model(State modelState, ArtData artData, std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
 	      bool popAdjust, array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
 	      array_2d cumNetMigr, double netMigrationHivProb, array_3d paedSurvCd4Distrib,
-	      array_2d entrantArtCov, array_4d paedSurvArtCd4Distrib, array_3d survRate,
+	      array_3d survRate,
 	      array_3d netMigr, array_2d asfRate, array_2d sexRatioBirth, int hivStepsPerYear,
 	      array_3d cd4Prog, array_3d cd4InitDist, array_3d cd4Mort, array_3d incrrAges, int tArtStart,
-	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps,
-	      std::vector<int> artCd4EligibleId, std::vector<double> specPopulationPercentElig,
-	      std::vector<double> pregnantWomenArtElig, double who34PercElig)
+	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps)
 		: state(modelState),
+		  art(artData),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
 		  entrantPopulation(boost::extents[PROJECTION_YEARS][SEXES]),
@@ -83,8 +77,6 @@ public:
 		  cumulativeSurvey(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeNetMigr(boost::extents[PROJECTION_YEARS][SEXES]),
 		  paedSurvCd4Dist(boost::extents[PROJECTION_YEARS][SEXES][CD4_STAGES]),
-		  entrantArtCoverage(boost::extents[PROJECTION_YEARS][SEXES]),
-		  paedSurvArtCd4Dist(boost::extents[PROJECTION_YEARS][SEXES][CD4_STAGES][TREATMENT_STAGES]),
 		  survivalRate(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  netMigration(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
 		  asfr(boost::extents[PROJECTION_YEARS][FERT_AGES]),
@@ -106,8 +98,6 @@ public:
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
 		netMigrHivProb = netMigrationHivProb;
-		entrantArtCoverage = entrantArtCov;
-		paedSurvArtCd4Dist = paedSurvArtCd4Distrib;
 		survivalRate = survRate;
 		vertTransLag = vertTLag;
 		paedSurveyLag = paedSurvLag;
@@ -127,15 +117,10 @@ public:
 		eppMod = eppModel;
 		scaleCd4Mortality = scaleCd4Mort;
 		projectionSteps = projSteps;
-		artCd4EligId = artCd4EligibleId;
-		specPopPercentElig = specPopulationPercentElig;
-		pregnantArtElig = pregnantWomenArtElig;
-		who34PercentElig = who34PercElig;
 		ageGroupsSpan = ageGroupsSp;
 		incidMod = FALSE;
 		prevalenceCurrent = 0.0;
 		useEntrantPrev = FALSE;
-		everArtEligId = CD4_STAGES;
 
 		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
 			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + ageGroupsSpan[ageGroup - 1];
@@ -148,7 +133,7 @@ public:
 
 	void updateModelState(int t) {
 		state.updatePopulation(t);
-		state.updateArtPopulation();
+		state.updateArtPopulation(art.population);
 		state.updateHivPopulation();
 		state.updateNaturalDeaths();
 		state.updateInfections();

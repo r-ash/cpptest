@@ -33,7 +33,7 @@ void Model::agePopulation(int t) {
 				state.hivPop[sex][ageGroup][cd4Stage] = (1 - hivAgProb[sex][ageGroup]) * state.previousHivPop[sex][ageGroup][cd4Stage] + hivAgProb[sex][ageGroup - 1] * state.previousHivPop[sex][ageGroup - 1][cd4Stage];
 				if (t > timeArtStart) {
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-						state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][ageGroup]) * state.previousArtPopulation[sex][ageGroup][cd4Stage][treatmentStage] + hivAgProb[sex][ageGroup - 1] * state.previousArtPopulation[sex][ageGroup - 1][cd4Stage][treatmentStage];
+						art.population[sex][ageGroup][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][ageGroup]) * state.previousArtPopulation[sex][ageGroup][cd4Stage][treatmentStage] + hivAgProb[sex][ageGroup - 1] * state.previousArtPopulation[sex][ageGroup - 1][cd4Stage][treatmentStage];
 					}
 				}
 			}
@@ -65,11 +65,11 @@ void Model::agePopulation(int t) {
 		                    (state.population[HIVN][MALE][0] + state.population[HIVN][FEMALE][0] + state.population[HIVP][MALE][0] + state.population[HIVP][FEMALE][0]);
 
 		for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-			state.hivPop[sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * state.previousHivPop[sex][0][cd4Stage] + paedSurvPos * paedSurvCd4Dist[t][sex][cd4Stage] * (1.0 - entrantArtCoverage[t][sex]);
+			state.hivPop[sex][0][cd4Stage] = (1 - hivAgProb[sex][0]) * state.previousHivPop[sex][0][cd4Stage] + paedSurvPos * paedSurvCd4Dist[t][sex][cd4Stage] * (1.0 - art.entrantCoverage[t][sex]);
 			if (t > timeArtStart) {
 				for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-					state.artPopulation[sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * state.previousArtPopulation[sex][0][cd4Stage][treatmentStage];
-					state.artPopulation[sex][0][cd4Stage][treatmentStage] += paedSurvPos * paedSurvArtCd4Dist[t][sex][cd4Stage][treatmentStage] * entrantArtCoverage[t][sex];
+					art.population[sex][0][cd4Stage][treatmentStage] = (1 - hivAgProb[sex][0]) * state.previousArtPopulation[sex][0][cd4Stage][treatmentStage];
+					art.population[sex][0][cd4Stage][treatmentStage] += paedSurvPos * art.paedSurvArtCd4Dist[t][sex][cd4Stage][treatmentStage] * art.entrantCoverage[t][sex];
 				}
 			}
 		}
@@ -113,7 +113,7 @@ void Model::deathsAndMigration(int t) {
 				state.hivPop[sex][ageGroup][cd4Stage] *= 1 + hivPopDeathsMigrRate;
 				if (t > timeArtStart) {
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-						state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage] *= 1 + hivPopDeathsMigrRate;
+						art.population[sex][ageGroup][cd4Stage][treatmentStage] *= 1 + hivPopDeathsMigrRate;
 					}
 				}
 			}
@@ -147,10 +147,7 @@ void Model::fertility(int t) {
 
 void Model::diseaseProgression(int t) {
 
-	int cd4EligId = artCd4EligId[t] - 1; // -1 for 0-based indexing vs 1-based in R
-	int anyEligId = ((specPopPercentElig[t] > 0) | (pregnantArtElig[t] > 0)) ? 0 : (who34PercentElig > 0) ? hIDX_CD4_350 : cd4EligId;
-	everArtEligId = anyEligId < everArtEligId ? anyEligId : everArtEligId;
-
+	art.calculateEverArtEligId(t);
 	for (int hivStep = 0; hivStep < HIVSTEPS_PER_YEAR; hivStep++) {
 		int ts = (t - 1) * HIVSTEPS_PER_YEAR + hivStep;
 		double hivDeathsByAgeGroup[SEXES][AGE_GROUPS];
@@ -160,10 +157,10 @@ void Model::diseaseProgression(int t) {
 				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
 
 					double cd4mxScale = 1.0;
-					if (scaleCd4Mortality & (t >= timeArtStart) & (cd4Stage >= everArtEligId)) {
+					if (scaleCd4Mortality & (t >= timeArtStart) & (cd4Stage >= art.everArtEligId)) {
 						double artPopAgeSex = 0.0;
 						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
-							artPopAgeSex += state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage];
+							artPopAgeSex += art.population[sex][ageGroup][cd4Stage][treatmentStage];
 						}
 						cd4mxScale = state.hivPop[sex][ageGroup][cd4Stage] / (state.hivPop[sex][ageGroup][cd4Stage] + artPopAgeSex);
 					}
@@ -292,7 +289,7 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 				Xhivp_noart += state.hivPop[sex][ha][cd4Stage] * prop_include;
 				if (t >= timeArtStart)
 					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++)
-						Xart += state.artPopulation[sex][ha][cd4Stage][treatmentStage] * prop_include;
+						Xart += art.population[sex][ha][cd4Stage][treatmentStage] * prop_include;
 			}
 		}
 	}

@@ -35,13 +35,15 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	array_3d incrrAge = read_3d_array(incrrAges, PROJECTION_YEARS, SEXES, MODEL_AGES);
 	Rcpp::Rcout << "initialising model \n";
 
-	State state = State(basePopulation);
-	Model model = Model(state, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
+	ArtData art = ArtData(entrantArtCov, paedSurvArtCd4Dist, artCd4EligId,
+	                      specPopPercentElig, pregnantWomenArtElig, who34PercentElig);
+	State state = State(basePopulation, art.population);
+	Model model = Model(state, art, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
 	                    entrantPopulation, birthsLag, cumulativeSurvey, cumulativeNetMigr, netMigrHivProb,
-	                    paedSurvCd4Dist, entrantArtCov, paedSurvArtCd4Dist, survivalRate, netMigration,
+	                    paedSurvCd4Dist, survivalRate, netMigration,
 	                    asfr, sexRatioAtBirth, hivStepsPerYear, cd4Progression, cd4InitialDist,
 	                    cd4Mortality, incrrAge, timeArtStart, relinfectArt, eppMod, scaleCd4Mort,
-	                    projSteps, artCd4EligId, specPopPercentElig, pregnantWomenArtElig, who34PercentElig);
+	                    projSteps);
 	if (entrantPrev != R_NilValue) {
 		array_2d entPrev = readEntrantPrev(entrantPrev);
 		model.setEntrantPrev(entPrev);
