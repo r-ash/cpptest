@@ -10,6 +10,7 @@
 #include "Cd4Data.h"
 #include "InfectionData.h"
 #include "PopulationData.h"
+#include "HivData.h"
 
 class Model {
 private:
@@ -18,10 +19,7 @@ private:
 	bool useEntrantPrev;
 	array_2d entrantPrev;
 	std::vector<double> previousPregnancyLag;
-	std::vector<double> vertTransLag;
-	std::vector<double> paedSurveyLag;
 	bool populationAdjust;
-	double netMigrHivProb;
 	const int HIVSTEPS_PER_YEAR;
 	const int DT;
 	double relinfectArt;
@@ -52,9 +50,10 @@ public:
 	Cd4Data cd4;
 	InfectionData infection;
 	PopulationData pop;
+	HivData hiv;
 	Model(State modelState, ArtData artData, Cd4Data cd4Data, InfectionData infectionData, PopulationData populationData,
-	      std::vector<double> ageGroupsSp, std::vector<double> vertTLag, std::vector<double> paedSurvLag,
-	      bool popAdjust, double netMigrationHivProb,
+	      HivData hivData, std::vector<double> ageGroupsSp,
+	      bool popAdjust,
 	      int hivStepsPerYear,
 	      int tArtStart,
 	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps)
@@ -63,6 +62,7 @@ public:
 		  cd4(cd4Data),
 		  infection(infectionData),
 		  pop(populationData),
+		  hiv(hivData),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
 		  HIVSTEPS_PER_YEAR(hivStepsPerYear),
@@ -77,9 +77,6 @@ public:
 
 		timeArtStart = tArtStart;
 		populationAdjust = popAdjust;
-		netMigrHivProb = netMigrationHivProb;
-		vertTransLag = vertTLag;
-		paedSurveyLag = paedSurvLag;
 		relinfectArt = artRelinfect;
 		eppMod = eppModel;
 		scaleCd4Mortality = scaleCd4Mort;

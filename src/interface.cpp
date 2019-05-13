@@ -41,11 +41,10 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	InfectionData infection = InfectionData(incrrAge);
 	PopulationData population = PopulationData(entrantPopulation, birthsLag, cumulativeSurvey,
 	                            cumulativeNetMigr, survivalRate, netMigration, asfr, sexRatioAtBirth);
+	HivData hiv = HivData(netMigrHivProb, vertTransLag, paedSurveyLag);
 	State state = State(basePopulation, art.population);
-	Model model = Model(state, art, cd4, infection, population, ageGroupsSpan, vertTransLag, paedSurveyLag, populationAdjust,
-	                    netMigrHivProb,
-	                    hivStepsPerYear, timeArtStart, relinfectArt, eppMod, scaleCd4Mort,
-	                    projSteps);
+	Model model = Model(state, art, cd4, infection, population, hiv, ageGroupsSpan, populationAdjust,
+	                    hivStepsPerYear, timeArtStart, relinfectArt, eppMod, scaleCd4Mort, projSteps);
 	if (entrantPrev != R_NilValue) {
 		array_2d entPrev = readEntrantPrev(entrantPrev);
 		model.setEntrantPrev(entPrev);

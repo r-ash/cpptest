@@ -13,7 +13,7 @@ public:
 	InfectionData(array_3d incrrAges)
 		: incrrAge(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]) {
 		incrrAge = incrrAges;
-		incidMod = FALSE;
+		incidMod = false;
 	}
 
 };

@@ -48,14 +48,14 @@ void Model::agePopulation(int t) {
 		if (useEntrantPrev) {
 			entrantPrevalence = entrantPrev[t][sex];
 		} else {
-			entrantPrevalence = previousPregnancyLag[t - 1] * vertTransLag[t - 1] * paedSurveyLag[t - 1];
+			entrantPrevalence = previousPregnancyLag[t - 1] * hiv.vertTransLag[t - 1] * hiv.paedSurveyLag[t - 1];
 		}
 
 		if (populationAdjust) {
 			state.population[HIVN][sex][0] = pop.entrantPopulation[t - 1][sex] * (1.0 - entrantPrevalence);
 			state.population[HIVP][sex][0] = pop.entrantPopulation[t - 1][sex] * entrantPrevalence;
 		} else {
-			state.population[HIVN][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / paedSurveyLag[t - 1]) + pop.cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * netMigrHivProb);
+			state.population[HIVN][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / hiv.paedSurveyLag[t - 1]) + pop.cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * hiv.netMigrProb);
 			state.population[HIVP][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * entrantPrevalence + pop.cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
 		}
 
