@@ -42,9 +42,10 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	PopulationData population = PopulationData(entrantPopulation, birthsLag, cumulativeSurvey,
 	                            cumulativeNetMigr, survivalRate, netMigration, asfr, sexRatioAtBirth);
 	HivData hiv = HivData(netMigrHivProb, vertTransLag, paedSurveyLag);
+	Metadata meta = Metadata(timeArtStart, relinfectArt, eppMod, projSteps, populationAdjust,
+	                         ageGroupsSpan, scaleCd4Mort, hivStepsPerYear);
 	State state = State(basePopulation);
-	Model model = Model(state, art, cd4, infection, population, hiv, ageGroupsSpan, populationAdjust,
-	                    hivStepsPerYear, timeArtStart, relinfectArt, eppMod, scaleCd4Mort, projSteps);
+	Model model = Model(state, art, cd4, infection, population, hiv, meta);
 	if (entrantPrev != R_NilValue) {
 		array_2d entPrev = readEntrantPrev(entrantPrev);
 		model.setEntrantPrev(entPrev);

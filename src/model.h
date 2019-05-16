@@ -11,22 +11,15 @@
 #include "InfectionData.h"
 #include "PopulationData.h"
 #include "HivData.h"
+#include "Metadata.h"
 
 class Model {
 private:
-	std::vector<double> ageGroupsSpan;
-	int timeArtStart;
 	bool useEntrantPrev;
 	array_2d entrantPrev;
 	std::vector<double> previousPregnancyLag;
-	bool populationAdjust;
-	const int HIVSTEPS_PER_YEAR;
 	const int DT;
-	double relinfectArt;
 	double iota;
-	int eppMod;
-	int scaleCd4Mortality;
-	std::vector<double> projectionSteps;
 	double timeEpidemicStart;
 	double prevalenceCurrent;
 	// Store prevalence at last time step for r-trend model
@@ -51,42 +44,31 @@ public:
 	InfectionData infection;
 	PopulationData pop;
 	HivData hiv;
+	Metadata meta;
 	Model(State modelState, ArtData artData, Cd4Data cd4Data, InfectionData infectionData, PopulationData populationData,
-	      HivData hivData, std::vector<double> ageGroupsSp,
-	      bool popAdjust,
-	      int hivStepsPerYear,
-	      int tArtStart,
-	      double artRelinfect, int eppModel, int scaleCd4Mort, std::vector<double> projSteps)
+	      HivData hivData, Metadata metadata)
 		: state(modelState),
 		  art(artData),
 		  cd4(cd4Data),
 		  infection(infectionData),
 		  pop(populationData),
 		  hiv(hivData),
+		  meta(metadata),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
-		  HIVSTEPS_PER_YEAR(hivStepsPerYear),
-		  DT(1.0 / HIVSTEPS_PER_YEAR),
+		  DT(1.0 / metadata.hivStepsPerYear),
 		  ageGroupsStart(AGE_GROUPS, 0),
 		  entrantPrevOut(boost::extents[PROJECTION_YEARS]),
 		  incidence15to49(boost::extents[PROJECTION_YEARS]),
-		  prevalence15to49(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
-		  incrate15To49(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
-		  rVec(boost::extents[(PROJECTION_YEARS - 1) * hivStepsPerYear]),
+		  prevalence15to49(boost::extents[(PROJECTION_YEARS - 1) * metadata.hivStepsPerYear]),
+		  incrate15To49(boost::extents[(PROJECTION_YEARS - 1) * metadata.hivStepsPerYear]),
+		  rVec(boost::extents[(PROJECTION_YEARS - 1) * metadata.hivStepsPerYear]),
 		  infections(boost::extents[SEXES][MODEL_AGES]) {
 
-		timeArtStart = tArtStart;
-		populationAdjust = popAdjust;
-		relinfectArt = artRelinfect;
-		eppMod = eppModel;
-		scaleCd4Mortality = scaleCd4Mort;
-		projectionSteps = projSteps;
-		ageGroupsSpan = ageGroupsSp;
-		prevalenceCurrent = 0.0;
 		useEntrantPrev = FALSE;
 
 		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
-			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + ageGroupsSpan[ageGroup - 1];
+			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + meta.ageGroupsSpan[ageGroup - 1];
 		}
 
 		// Prepare outputs
