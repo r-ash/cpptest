@@ -29,6 +29,7 @@ private:
 	std::vector<double> rTrendBeta;
 	double rTrendTStab;
 	double rTrendR0;
+	array_2d birthsLag;
 	// Outputs
 	array_1d entrantPrevOut;
 	array_1d incidence15to49;
@@ -39,14 +40,14 @@ private:
 
 public:
 	State state;
-	ArtData art;
-	Cd4Data cd4;
-	InfectionData infection;
-	PopulationData pop;
-	HivData hiv;
-	Metadata meta;
-	Model(State modelState, ArtData artData, Cd4Data cd4Data, InfectionData infectionData, PopulationData populationData,
-	      HivData hivData, Metadata metadata)
+	const ArtData art;
+	const Cd4Data cd4;
+	const InfectionData infection;
+	const PopulationData pop;
+	const HivData hiv;
+	const Metadata meta;
+	Model(State modelState, const ArtData& artData, const Cd4Data& cd4Data, const InfectionData& infectionData,
+	      const PopulationData& populationData, const HivData& hivData, const Metadata& metadata, array_2d birthLag)
 		: state(modelState),
 		  art(artData),
 		  cd4(cd4Data),
@@ -54,6 +55,7 @@ public:
 		  pop(populationData),
 		  hiv(hivData),
 		  meta(metadata),
+		  birthsLag(boost::extents[PROJECTION_YEARS][SEXES]),
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
 		  DT(1.0 / metadata.hivStepsPerYear),
@@ -65,7 +67,8 @@ public:
 		  rVec(boost::extents[(PROJECTION_YEARS - 1) * metadata.hivStepsPerYear]),
 		  infections(boost::extents[SEXES][MODEL_AGES]) {
 
-		useEntrantPrev = FALSE;
+		birthsLag = birthLag;
+		useEntrantPrev = false;
 
 		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
 			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + meta.ageGroupsSpan[ageGroup - 1];
@@ -85,14 +88,9 @@ public:
 	};
 
 	void setEntrantPrev(array_2d entPrev) {
-		useEntrantPrev = TRUE;
+		useEntrantPrev = true;
 		entrantPrev = entPrev;
 	};
-
-	void setIncrrSex(std::vector<double> incrrSexRatio) {
-		infection.incidMod = TRUE;
-		infection.incrrSex = incrrSexRatio;
-	}
 
 	void initialiseRSpline(std::vector<double> rSplineVec) {
 		rSplineRVec = rSplineVec;

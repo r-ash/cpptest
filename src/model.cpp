@@ -55,8 +55,8 @@ void Model::agePopulation(int t) {
 			state.population[HIVN][sex][0] = pop.entrantPopulation[t - 1][sex] * (1.0 - entrantPrevalence);
 			state.population[HIVP][sex][0] = pop.entrantPopulation[t - 1][sex] * entrantPrevalence;
 		} else {
-			state.population[HIVN][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / hiv.paedSurveyLag[t - 1]) + pop.cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * hiv.netMigrProb);
-			state.population[HIVP][sex][0] = pop.birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * entrantPrevalence + pop.cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
+			state.population[HIVN][sex][0] = birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * (1.0 - entrantPrevalence / hiv.paedSurveyLag[t - 1]) + pop.cumulativeNetMigr[t - 1][sex] * (1.0 - previousPregnancyLag[t - 1] * hiv.netMigrProb);
+			state.population[HIVP][sex][0] = birthsLag[t - 1][sex] * pop.cumulativeSurvey[t - 1][sex] * entrantPrevalence + pop.cumulativeNetMigr[t - 1][sex] * entrantPrevalence;
 		}
 
 		double paedSurvPos = state.population[HIVP][sex][0];
@@ -140,7 +140,7 @@ void Model::fertility(int t) {
 
 	if (t + AGE_START < PROJECTION_YEARS) {
 		for (int sex = 0; sex < SEXES; sex++) {
-			pop.birthsLag[t + AGE_START - 1][sex] = pop.sexRatioAtBirth[t][sex] * births;
+			birthsLag[t + AGE_START - 1][sex] = pop.sexRatioAtBirth[t][sex] * births;
 		}
 	}
 }

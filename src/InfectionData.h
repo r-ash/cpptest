@@ -16,6 +16,11 @@ public:
 		incidMod = false;
 	}
 
+	void setIncrrSex(std::vector<double> incrrSexRatio) {
+		incidMod = true;
+		incrrSex = incrrSexRatio;
+	}
+
 };
 
 #endif

@@ -4,8 +4,7 @@
 #include "read_array.h"
 #include "consts.h"
 
-class Metadata {
-public:
+struct Metadata {
 	int timeArtStart;
 	double relinfectArt;
 	int eppMod;

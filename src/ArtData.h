@@ -4,8 +4,7 @@
 #include "read_array.h"
 #include "consts.h"
 
-class ArtData {
-public:
+struct ArtData {
 	array_2d entrantCoverage;
 	array_4d paedSurvArtCd4Dist;
 	std::vector<int> artCd4EligId;

@@ -4,8 +4,7 @@
 #include "read_array.h"
 #include "consts.h"
 
-class HivData {
-public:
+struct HivData {
 	double netMigrProb;
 	std::vector<double> vertTransLag;
 	std::vector<double> paedSurveyLag;

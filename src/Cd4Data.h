@@ -4,8 +4,7 @@
 #include "read_array.h"
 #include "consts.h"
 
-class Cd4Data {
-public:
+struct Cd4Data {
 	array_3d progression;
 	array_3d initialDist;
 	array_3d mortality;

@@ -4,10 +4,8 @@
 #include "read_array.h"
 #include "consts.h"
 
-class PopulationData {
-public:
+struct PopulationData {
 	array_2d entrantPopulation;
-	array_2d birthsLag;
 	array_2d cumulativeSurvey;
 	array_2d cumulativeNetMigr;
 	array_3d survivalRate;
@@ -15,11 +13,10 @@ public:
 	array_2d asfr;
 	array_2d sexRatioAtBirth;
 
-	PopulationData(array_2d entrantPop, array_2d birthLag, array_2d cumSurvey,
+	PopulationData(array_2d entrantPop, array_2d cumSurvey,
 	               array_2d cumNetMigr, array_3d survRate, array_3d netMigr,
 	               array_2d asfRate, array_2d sexRatioBirth)
 		: entrantPopulation(boost::extents[PROJECTION_YEARS][SEXES]),
-		  birthsLag(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeSurvey(boost::extents[PROJECTION_YEARS][SEXES]),
 		  cumulativeNetMigr(boost::extents[PROJECTION_YEARS][SEXES]),
 		  survivalRate(boost::extents[PROJECTION_YEARS][SEXES][MODEL_AGES]),
@@ -28,7 +25,6 @@ public:
 		  sexRatioAtBirth(boost::extents[PROJECTION_YEARS][SEXES])  {
 
 		entrantPopulation = entrantPop;
-		birthsLag = birthLag;
 		cumulativeSurvey = cumSurvey;
 		cumulativeNetMigr = cumNetMigr;
 		survivalRate = survRate;

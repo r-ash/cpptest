@@ -40,19 +40,19 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	                      timeSteps);
 	Cd4Data cd4 = Cd4Data(cd4Progression, cd4InitialDist, cd4Mortality, paedSurvCd4Dist);
 	InfectionData infection = InfectionData(incrrAge);
-	PopulationData population = PopulationData(entrantPopulation, birthsLag, cumulativeSurvey,
+	if (incidMod != R_NilValue) {
+		infection.setIncrrSex(incrrSex);
+	}
+	PopulationData population = PopulationData(entrantPopulation, cumulativeSurvey,
 	                            cumulativeNetMigr, survivalRate, netMigration, asfr, sexRatioAtBirth);
 	HivData hiv = HivData(netMigrHivProb, vertTransLag, paedSurveyLag);
 	Metadata meta = Metadata(timeArtStart, relinfectArt, eppMod, projSteps, populationAdjust,
 	                         ageGroupsSpan, scaleCd4Mort, hivStepsPerYear);
 	State state = State(basePopulation);
-	Model model = Model(state, art, cd4, infection, population, hiv, meta);
+	Model model = Model(state, art, cd4, infection, population, hiv, meta, birthsLag);
 	if (entrantPrev != R_NilValue) {
 		array_2d entPrev = readEntrantPrev(entrantPrev);
 		model.setEntrantPrev(entPrev);
-	}
-	if (incidMod != R_NilValue) {
-		model.setIncrrSex(incrrSex);
 	}
 
 	if (eppMod != EPP_DIRECTINCID) {
