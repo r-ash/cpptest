@@ -146,8 +146,6 @@ void Model::fertility(int t) {
 }
 
 void Model::diseaseProgression(int t) {
-
-	art.calculateEverArtEligId(t);
 	for (int hivStep = 0; hivStep < meta.hivStepsPerYear; hivStep++) {
 		int ts = (t - 1) * meta.hivStepsPerYear + hivStep;
 		double hivDeathsByAgeGroup[SEXES][AGE_GROUPS];
@@ -157,7 +155,7 @@ void Model::diseaseProgression(int t) {
 				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
 
 					double cd4mxScale = 1.0;
-					if (meta.scaleCd4Mortality & (t >= meta.timeArtStart) & (cd4Stage >= art.everArtEligId)) {
+					if (meta.scaleCd4Mortality & (t >= meta.timeArtStart) & (cd4Stage >= art.everArtEligId[t - 1])) {
 						double artPopAgeSex = 0.0;
 						for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
 							artPopAgeSex += state.artPopulation[sex][ageGroup][cd4Stage][treatmentStage];

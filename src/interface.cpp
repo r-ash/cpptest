@@ -36,7 +36,8 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ag
 	Rcpp::Rcout << "initialising model \n";
 
 	ArtData art = ArtData(entrantArtCov, paedSurvArtCd4Dist, artCd4EligId,
-	                      specPopPercentElig, pregnantWomenArtElig, who34PercentElig);
+	                      specPopPercentElig, pregnantWomenArtElig, who34PercentElig,
+	                      timeSteps);
 	Cd4Data cd4 = Cd4Data(cd4Progression, cd4InitialDist, cd4Mortality, paedSurvCd4Dist);
 	InfectionData infection = InfectionData(incrrAge);
 	PopulationData population = PopulationData(entrantPopulation, birthsLag, cumulativeSurvey,

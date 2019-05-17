@@ -26,8 +26,8 @@ public:
 		population(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
 		previousPopulation(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
 		outputPopulation(boost::extents[PROJECTION_YEARS][DISEASE_STATUS][SEXES][MODEL_AGES]),
-		artPopulation(boost::extents[SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
-		previousArtPopulation(boost::extents[SEXES][AGE_GROUPS][DISEASE_STATUS][CD4_STAGES]),
+		artPopulation(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES][TREATMENT_STAGES]),
+		previousArtPopulation(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES][TREATMENT_STAGES]),
 		hivPop(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
 		previousHivPop(boost::extents[SEXES][AGE_GROUPS][CD4_STAGES]),
 		naturalDeaths(boost::extents[SEXES][MODEL_AGES]),
@@ -51,23 +51,16 @@ public:
 
 		for (int sex = 0; sex < SEXES; sex++) {
 			for (int ageGroup = 0; ageGroup < AGE_GROUPS; ageGroup++) {
-				for (int diseaseStatus = 0; diseaseStatus < DISEASE_STATUS; diseaseStatus++) {
-					for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
+				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
+					hivPop[sex][ageGroup][cd4Stage] = 0.0;
+					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
 						// Initialise to 0 in year of ART start
-						artPopulation[sex][ageGroup][diseaseStatus][cd4Stage] = 0.0;
+						artPopulation[sex][ageGroup][cd4Stage][treatmentStage] = 0.0;
 					}
 				}
 			}
 		}
 		previousArtPopulation = artPopulation;
-
-		for (int sex = 0; sex < SEXES; sex++) {
-			for (int ageGroup = 0; ageGroup < AGE_GROUPS; ageGroup++) {
-				for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
-					hivPop[sex][ageGroup][cd4Stage] = 0.0;
-				}
-			}
-		}
 		previousHivPop = hivPop;
 	}
 
