@@ -21,10 +21,6 @@ private:
 	const int DT;
 	double iota;
 	double timeEpidemicStart;
-	double prevalenceCurrent;
-	// Store prevalence at last time step for r-trend model
-	double prevalenceLast;
-	std::vector<int> ageGroupsStart;
 	std::vector<double> rSplineRVec;
 	std::vector<double> rTrendBeta;
 	double rTrendTStab;
@@ -59,7 +55,6 @@ public:
 		  entrantPrev(boost::extents[PROJECTION_YEARS][SEXES]),
 		  previousPregnancyLag(PROJECTION_YEARS, 0.0),
 		  DT(1.0 / metadata.hivStepsPerYear),
-		  ageGroupsStart(AGE_GROUPS, 0),
 		  entrantPrevOut(boost::extents[PROJECTION_YEARS]),
 		  incidence15to49(boost::extents[PROJECTION_YEARS]),
 		  prevalence15to49(boost::extents[(PROJECTION_YEARS - 1) * metadata.hivStepsPerYear]),
@@ -70,9 +65,6 @@ public:
 		birthsLag = birthLag;
 		useEntrantPrev = false;
 
-		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
-			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + meta.ageGroupsSpan[ageGroup - 1];
-		}
 
 		// Prepare outputs
 		prevalence15to49[0] = 0.0;

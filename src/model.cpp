@@ -191,7 +191,7 @@ void Model::diseaseProgression(int t) {
 				                          t, hivStep, ts, infectionsBySexAge);
 			}
 
-			prevalence15to49[ts] = prevalenceCurrent;
+			prevalence15to49[ts] = state.prevalence;
 
 			// add new infections to HIV population
 			for (int sex = 0; sex < SEXES; sex++) {
@@ -222,11 +222,12 @@ void Model::diseaseProgression(int t) {
 double Model::calcRtrendRt(int hivStep, int ts) {
 	// sum population sizes
 	double Xhivn = 0.0, Xhivp = 0.0;
-	for (int sex = 0; sex < SEXES; sex++)
+	for (int sex = 0; sex < SEXES; sex++) {
 		for (int a = pIDX_15TO49; a < pIDX_15TO49 + pAG_15TO49; a++) {
 			Xhivn += state.population[HIVN][sex][a];
 			Xhivp += state.population[HIVP][sex][a];
 		}
+	}
 
 	// adjust HIV population for partial year time step
 	for (int sex = 0; sex < SEXES; sex++) {
@@ -238,15 +239,14 @@ double Model::calcRtrendRt(int hivStep, int ts) {
 
 	double Xtot = Xhivn + Xhivp;
 
-	prevalenceLast = prevalenceCurrent;
-	prevalenceCurrent = Xhivp / Xtot;
+	state.prevalence = Xhivp / Xtot;
 
 	// calculate r(t)
 	double projStep = meta.projectionSteps[ts];
 	if (projStep > timeEpidemicStart) {
 		double rVecLast = rVec[ts - 1];
-		double gammaTs = (projStep < rTrendTStab) ? 0.0 : (prevalenceCurrent - prevalenceLast) * (projStep - rTrendTStab) / (DT * (prevalenceLast));
-		double logrDiff = rTrendBeta[1] * (rTrendBeta[0] - rVecLast) + rTrendBeta[2] * (prevalenceLast) + rTrendBeta[3] * gammaTs;
+		double gammaTs = (projStep < rTrendTStab) ? 0.0 : (state.prevalence - state.previousPrevalence) * (projStep - rTrendTStab) / (DT * (state.previousPrevalence));
+		double logrDiff = rTrendBeta[1] * (rTrendBeta[0] - rVecLast) + rTrendBeta[2] * (state.previousPrevalence) + rTrendBeta[3] * gammaTs;
 		return exp(log(rVecLast) + logrDiff);
 	} else {
 		return rTrendR0;
@@ -272,22 +272,25 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 			double prop_include;
 			if (ha == hIDX_15TO49) {
 				double hivp_ha = 0.0;
-				for (int a = ageGroupsStart[ha]; a < ageGroupsStart[ha] + meta.ageGroupsSpan[ha]; a++)
+				for (int a = meta.ageGroupsStart[ha]; a < meta.ageGroupsStart[ha] + meta.ageGroupsSpan[ha]; a++) {
 					hivp_ha += state.population[HIVP][sex][a];
-				prop_include = (hivp_ha > 0) ? 1.0 - state.population[HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
+				}
+				prop_include = (hivp_ha > 0) ? 1.0 - state.population[HIVP][sex][meta.ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
 			} else if (ha == hIDX_15TO49 + hAG_15TO49) {
 				double hivp_ha = 0.0;
-				for (int a = ageGroupsStart[ha]; a < ageGroupsStart[ha] + meta.ageGroupsSpan[ha]; a++)
+				for (int a = meta.ageGroupsStart[ha]; a < meta.ageGroupsStart[ha] + meta.ageGroupsSpan[ha]; a++) {
 					hivp_ha += state.population[HIVP][sex][a];
-				prop_include = (hivp_ha > 0) ? state.population[HIVP][sex][ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
+				}
+				prop_include = (hivp_ha > 0) ? state.population[HIVP][sex][meta.ageGroupsStart[ha]] / hivp_ha * (1.0 - DT * hts) : 1.0;
 			} else
 				prop_include = 1.0;
 
 			for (int cd4Stage = 0; cd4Stage < CD4_STAGES; cd4Stage++) {
 				Xhivp_noart += state.hivPop[sex][ha][cd4Stage] * prop_include;
 				if (t >= meta.timeArtStart)
-					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++)
+					for (int treatmentStage = 0; treatmentStage < TREATMENT_STAGES; treatmentStage++) {
 						Xart += state.artPopulation[sex][ha][cd4Stage][treatmentStage] * prop_include;
+					}
 			}
 		}
 	}
@@ -300,7 +303,7 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 	}
 
 	double Xtot = Xhivn + Xhivp_noart + Xart;
-	prevalenceCurrent = (Xhivp_noart + Xart) / Xtot;
+	state.prevalence = (Xhivp_noart + Xart) / Xtot;
 
 	incrate15To49[ts] = rVec[ts] * (Xhivp_noart + meta.relinfectArt * Xart) / Xtot + iota;
 
@@ -310,10 +313,11 @@ void Model::calcInfectionsEppSpectrum(double iota, int t, int hts, int ts, doubl
 	incrate15To49Sex[FEMALE] = incrate15To49[ts] * infection.incrrSex[t] * (Xhivn_g[MALE] + Xhivn_g[FEMALE]) / (Xhivn_g[MALE] + infection.incrrSex[t] * Xhivn_g[FEMALE]);
 
 	// annualized infections by age and sex
-	for (int sex = 0; sex < SEXES; sex++)
+	for (int sex = 0; sex < SEXES; sex++) {
 		for (int age = 0; age < MODEL_AGES; age++) {
 			infectionsBySexAge[sex][age] = state.population[HIVN][sex][age] * incrate15To49Sex[sex] * infection.incrrAge[t][sex][age] * Xhivn_g[sex] / Xhivn_incagerr[sex];
 		}
+	}
 
 	return;
 }

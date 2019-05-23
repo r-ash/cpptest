@@ -2,7 +2,7 @@
 
 // timeSteps here should be SIM_YEARS constant, used var for testing
 // [[Rcpp::export]]
-std::vector<double> runModel(std::vector<double> basePop, std::vector<double> ageGroupsSpan, int timeArtStart,
+std::vector<double> runModel(std::vector<double> basePop, std::vector<int> ageGroupsSpan, int timeArtStart,
                              SEXP entrantPrev, std::vector<double> vertTransLag, std::vector<double> paedSurveyLag,
                              bool populationAdjust, std::vector<double> entrantPop, std::vector<double> birthLag,
                              std::vector<double> cumSurv, std::vector<double> cumNetMigr, double netMigrHivProb,

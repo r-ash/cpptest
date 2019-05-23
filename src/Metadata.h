@@ -10,12 +10,14 @@ struct Metadata {
 	int eppMod;
 	std::vector<double> projectionSteps;
 	bool populationAdjust;
-	std::vector<double> ageGroupsSpan;
+	std::vector<int> ageGroupsSpan;
+	std::vector<int> ageGroupsStart;
 	int scaleCd4Mortality;
 	const int hivStepsPerYear;
 	Metadata(int tArtStart, double artRelinfect, int eppModel, std::vector<double> projSteps,
-	         bool popAdjust, std::vector<double> ageGroupsSp, int scaleCd4Mort, int hivStepsPerYr)
-		: hivStepsPerYear(hivStepsPerYr) {
+	         bool popAdjust, std::vector<int> ageGroupsSp, int scaleCd4Mort, int hivStepsPerYr)
+		: hivStepsPerYear(hivStepsPerYr),
+		  ageGroupsStart(AGE_GROUPS, 0) {
 		timeArtStart = tArtStart;
 		relinfectArt = artRelinfect;
 		eppMod = eppModel;
@@ -23,6 +25,10 @@ struct Metadata {
 		populationAdjust = popAdjust;
 		ageGroupsSpan = ageGroupsSp;
 		scaleCd4Mortality = scaleCd4Mort;
+
+		for (int ageGroup = 1; ageGroup < AGE_GROUPS; ageGroup++) {
+			ageGroupsStart[ageGroup] = ageGroupsStart[ageGroup - 1] + ageGroupsSpan[ageGroup - 1];
+		}
 	}
 
 };

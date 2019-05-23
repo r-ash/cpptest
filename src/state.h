@@ -21,6 +21,8 @@ public:
 	array_3d previousHivPop;
 	array_2d naturalDeaths;
 	array_2d infections;
+	double prevalence;
+	double previousPrevalence;
 
 	State(array_2d basePopulation) :
 		population(boost::extents[DISEASE_STATUS][SEXES][MODEL_AGES]),
