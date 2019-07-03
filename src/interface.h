@@ -11,6 +11,8 @@
 #include "PopulationData.h"
 #include "HivData.h"
 #include "Metadata.h"
+#include "StrategyModel.h"
+#include "AgeMethod.h"
 
 std::vector<double> runModel(std::vector<double> basePop, std::vector<int> ageGroupsSpan, int timeArtStart,
                              SEXP entrantPrev, std::vector<double> vertTransLag, std::vector<double> paedSurveyLag,

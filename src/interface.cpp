@@ -49,29 +49,33 @@ std::vector<double> runModel(std::vector<double> basePop, std::vector<int> ageGr
 	Metadata meta = Metadata(timeArtStart, relinfectArt, eppMod, projSteps, populationAdjust,
 	                         ageGroupsSpan, scaleCd4Mort, hivStepsPerYear);
 	State state = State(basePopulation);
-	Model model = Model(state, art, cd4, infection, population, hiv, meta, birthsLag);
+
+	StrategyModel model = StrategyModel(state, art, cd4, infection, population, hiv, meta, birthsLag);
+	model.setAgeMethod(new DefaultAgeMethod());
+
 	if (entrantPrev != R_NilValue) {
 		array_2d entPrev = readEntrantPrev(entrantPrev);
 		model.setEntrantPrev(entPrev);
 	}
 
-	if (eppMod != EPP_DIRECTINCID) {
-		model.intialiseNonDirectIncid(Rcpp::as<double>(iota), Rcpp::as<double>(tsEpidemicStart));
-	}
-	if (eppMod == EPP_RSPLINE) {
-		model.initialiseRSpline(Rcpp::as < std::vector<double> >(rSplineRVec));
-	} else if (eppMod == EPP_RTREND) {
-		model.initialiseRTrend(Rcpp::as< std::vector<double> >(rTrendBeta), Rcpp::as<double>(rTrendTStab),
-		                       Rcpp::as<double>(rTrendR0));
-	}
+	// if (eppMod != EPP_DIRECTINCID) {
+	// 	model.intialiseNonDirectIncid(Rcpp::as<double>(iota), Rcpp::as<double>(tsEpidemicStart));
+	// }
+	// if (eppMod == EPP_RSPLINE) {
+	// 	model.initialiseRSpline(Rcpp::as < std::vector<double> >(rSplineRVec));
+	// } else if (eppMod == EPP_RTREND) {
+	// 	model.initialiseRTrend(Rcpp::as< std::vector<double> >(rTrendBeta), Rcpp::as<double>(rTrendTStab),
+	// 	                       Rcpp::as<double>(rTrendR0));
+	// }
 
-	for (int t = 1; t <= timeSteps; t++) {
-		Rcpp::Rcout << "Looping over time step " << t << "\n";
-		model.agePopulation(t);
-		model.deathsAndMigration(t);
-		model.fertility(t);
-		model.updateModelState(t);
-	}
+	// for (int t = 1; t <= timeSteps; t++) {
+	// 	Rcpp::Rcout << "Looping over time step " << t << "\n";
+	// 	model.agePopulation(t);
+	// 	model.deathsAndMigration(t);
+	// 	model.fertility(t);
+	// 	model.updateModelState(t);
+	// }
+	model.runModel(timeSteps);
 
 	// Convert back to view for R for testing
 	std::vector<double> ret_array(PROJECTION_YEARS * DISEASE_STATUS * SEXES * MODEL_AGES);
